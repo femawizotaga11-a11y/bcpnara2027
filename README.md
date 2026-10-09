@@ -35,6 +35,12 @@ Dashboard ศูนย์ปฏิบัติการฉุกเฉิน (EO
 
 > ทะเบียนกลุ่มเปราะบางมีชื่อ ที่อยู่ เบอร์โทร — แนะนำให้ตั้ง Sheet เป็นส่วนตัวและเข้าถึงผ่าน Web App + Token เท่านั้น
 
+## Auto-sync และ Auto-update
+- **Dashboard ⇄ Sheet:** ทุกการเปลี่ยนแปลง (CRUD จากเว็บ, แก้ใน Sheet โดยตรง, แทรก/ลบ/วางแถว) เพิ่มเลขรุ่น `rev` ใน Code.gs — Dashboard ถามเลขรุ่นแบบเบาทุก 5–300 วินาที (ตั้งที่มุมขวาบน) และดึงข้อมูลจริงเฉพาะเมื่อ rev เปลี่ยน
+- **Code.gs ⇄ โครงสร้าง:** `SCHEMA_VERSION` ถูกคำนวณจาก `index.html` ทุกครั้งที่ build ถ้า Code.gs ที่ Deploy ไม่ตรง Dashboard จะขึ้นแถบเตือน และเมื่อ Deploy เวอร์ชันใหม่ Code.gs จะซ่อมแซมแท็บ/คอลัมน์/Dropdown ให้เองในคำขอแรก พร้อมติดตั้ง Trigger (onChange + รายชั่วโมง) อัตโนมัติ
+- **Repo:** แก้ `index.html` แล้ว `Code.gs` ถูกสร้างใหม่เองเมื่อ commit (`.githooks/pre-commit` — เปิดด้วย `git config core.hooksPath .githooks`) และบน GitHub (`.github/workflows/build-codegs.yml`) ระหว่างพัฒนาใช้ `node tools/watch.js`
+- ข้อจำกัด: Apps Script ไม่อนุญาตให้ GitHub ส่งโค้ดเข้า Google โดยตรงโดยไม่ตั้ง `clasp` + บัญชี Google ดังนั้นขั้นสุดท้าย "วาง Code.gs → Deploy เวอร์ชันใหม่" ยังต้องทำเองเมื่อโครงสร้างเปลี่ยน
+
 ## พัฒนา
 ```
 node tools/build.js      # สร้าง Code.gs + tools/schema.json จาก index.html

@@ -12,7 +12,9 @@
  *   3. สิทธิ์ 3 ระดับ     ADMIN (Full) · EDITOR (CRUD) · VIEWER (อ่าน + ปิดบังข้อมูลส่วนบุคคล)
  *   4. ตรวจสอบข้อมูลฝั่งเซิร์ฟเวอร์ (ชนิดข้อมูล, ค่าที่เลือกได้, ช่วงตัวเลข, ค่าซ้ำ) + ล็อกกันเขียนชนกัน
  *   5. บันทึกประวัติทุกการเปลี่ยนแปลงลงแท็บ Log และประทับเวลาเมื่อแก้ไขใน Sheet โดยตรง (onEdit)
- *   6. เมนู "BCP นราธิวาส" ใน Google Sheet และฟังก์ชันปลดล็อกการแชร์ไฟล์ (Private / View / Full)
+ *   6. Auto-sync: ทุกการเปลี่ยนแปลง (CRUD / แก้ใน Sheet / แทรกลบแถว) เพิ่มเลขรุ่น (rev) → Dashboard ถามเลขรุ่นถี่ ๆ แบบเบา แล้วดึงข้อมูลเฉพาะเมื่อมีการเปลี่ยน
+ *   7. Auto-update: เมื่อโครงสร้างเปลี่ยน (SCHEMA_VERSION ใหม่) ระบบซ่อมแซมแท็บ/คอลัมน์/Dropdown เองในคำขอแรก + ติดตั้ง Trigger อัตโนมัติ
+ *   8. เมนู "BCP นราธิวาส" ใน Google Sheet และฟังก์ชันปลดล็อกการแชร์ไฟล์ (Private / View / Full)
  *
  *  วิธีติดตั้ง
  *   1) เปิด Google Sheet → Extensions → Apps Script → วางโค้ดนี้แทนของเดิม → Save
@@ -24,7 +26,9 @@
  * ============================================================================
  */
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
+/** รหัสโครงสร้างฐานข้อมูล — สร้างอัตโนมัติ; Dashboard เทียบค่านี้เพื่อเตือนเมื่อ Code.gs ล้าสมัย */
+const SCHEMA_VERSION = '1eb6cni';
 
 /** รหัสผ่านแต่ละระดับ — แก้ก่อนใช้งานจริง (หรือเก็บใน Project Settings → Script properties: TOKEN_ADMIN / TOKEN_EDITOR / TOKEN_VIEWER) */
 const TOKENS = {
@@ -278,6 +282,27 @@ function tokenOf_(role) {
   return p || TOKENS[role];
 }
 
+/** เลขรุ่นข้อมูล: เปลี่ยนทุกครั้งที่มีการเขียน เพื่อให้ Dashboard รู้ว่าต้อง Pull */
+function getRev_() { return PropertiesService.getScriptProperties().getProperty('REV') || '0'; }
+function bumpRev_() {
+  try { PropertiesService.getScriptProperties().setProperty('REV', String(Date.now()) + Math.random().toString(36).slice(2, 5)); } catch (e) { /* ignore */ }
+}
+
+/** ถ้าโครงสร้างเปลี่ยนจากที่เคย apply ไว้ → ซ่อมแซมฐานข้อมูลอัตโนมัติ (ทำงานครั้งเดียวต่อเวอร์ชัน) */
+function ensureSchema_() {
+  const P = PropertiesService.getScriptProperties();
+  if (P.getProperty('SCHEMA_APPLIED') === SCHEMA_VERSION) return false;
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    if (P.getProperty('SCHEMA_APPLIED') === SCHEMA_VERSION) return false;
+    setupDatabase_();
+    P.setProperty('SCHEMA_APPLIED', SCHEMA_VERSION);
+    bumpRev_();
+    return true;
+  } finally { lock.releaseLock(); }
+}
+
 /** คืนค่า 'admin' | 'editor' | 'viewer' | 'none' */
 function roleOf_(token) {
   if (!token) return 'none';
@@ -430,17 +455,19 @@ function doGet(e) {
     const p = (e && e.parameter) || {};
     const action = p.action || 'ping';
     const role = roleOf_(p.token);
+    if (role !== 'none') ensureSchema_();
     if (action === 'ping') {
       const m = meta_();
-      return json_({ ok: true, version: VERSION, name: m.name, url: m.url, id: m.id, tabs: m.tabs, role: role });
+      return json_({ ok: true, version: VERSION, schemaVersion: SCHEMA_VERSION, rev: getRev_(), name: m.name, url: m.url, id: m.id, tabs: m.tabs, role: role });
     }
     if (action === 'whoami') return json_({ ok: true, role: role });
     if (role === 'none') return fail_('Token ไม่ถูกต้องหรือยังไม่ได้ตั้งรหัสใน Code.gs', 401);
+    if (action === 'rev') return json_({ ok: true, rev: getRev_(), schemaVersion: SCHEMA_VERSION, role: role });
     if (action === 'schema') return json_({ ok: true, schema: DB });
     if (action === 'readAll') {
       const data = {};
       DB.order.forEach(function (t) { const r = readTab_(t, role); if (r) data[t] = r; });
-      return json_({ ok: true, role: role, data: data, meta: meta_() });
+      return json_({ ok: true, role: role, rev: getRev_(), schemaVersion: SCHEMA_VERSION, data: data, meta: meta_() });
     }
     if (action === 'read') {
       if (!DB.tabs[p.tab]) return fail_('ไม่รู้จักแท็บ ' + p.tab);
@@ -461,13 +488,14 @@ function doPost(e) {
   if (!need[action]) return fail_('ไม่รู้จักคำสั่ง ' + action);
   if (rank[role] < rank[need[action]]) return fail_('สิทธิ์ ' + role.toUpperCase() + ' ไม่เพียงพอ (ต้องการ ' + need[action].toUpperCase() + ')', 403);
 
+  try { ensureSchema_(); } catch (x) { return fail_('ซ่อมแซมฐานข้อมูลไม่สำเร็จ: ' + x.message, 500); }
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(20000);
   } catch (x) { return fail_('ระบบกำลังประมวลผลคำสั่งอื่น กรุณาลองใหม่', 503); }
   try {
-    if (action === 'whoami' || action === 'ping') return json_({ ok: true, role: role, version: VERSION });
-    if (action === 'setup') { const msg = setupDatabase_(); log_(role, 'setup', '', '', msg); return json_({ ok: true, message: msg }); }
+    if (action === 'whoami' || action === 'ping') return json_({ ok: true, role: role, version: VERSION, schemaVersion: SCHEMA_VERSION, rev: getRev_() });
+    if (action === 'setup') { const msg = setupDatabase_(); PropertiesService.getScriptProperties().setProperty('SCHEMA_APPLIED', SCHEMA_VERSION); bumpRev_(); log_(role, 'setup', '', '', msg); return json_({ ok: true, message: msg, rev: getRev_() }); }
     if (action === 'setSharing') { const msg = setSharing_(body.mode); log_(role, 'setSharing', '', '', msg); return json_({ ok: true, message: msg }); }
 
     const tab = body.tab;
@@ -484,7 +512,8 @@ function doPost(e) {
       row.updated_at = nowIso_(); row.updated_by = role;
       sh.appendRow(rowToValues_(tab, sh, row));
       log_(role, 'create', tab, row.id, JSON.stringify(row).slice(0, 300));
-      return json_({ ok: true, row: row });
+      bumpRev_();
+      return json_({ ok: true, row: row, rev: getRev_() });
     }
     if (action === 'update') {
       const row = body.row || {};
@@ -502,7 +531,8 @@ function doPost(e) {
       const vals = rowToValues_(tab, sh, merged);
       sh.getRange(idx, 1, 1, vals.length).setValues([vals]);
       log_(role, 'update', tab, merged.id, JSON.stringify(row).slice(0, 300));
-      return json_({ ok: true, row: merged });
+      bumpRev_();
+      return json_({ ok: true, row: merged, rev: getRev_() });
     }
     if (action === 'delete') {
       const id = (body.row && body.row.id) || body.id;
@@ -511,7 +541,8 @@ function doPost(e) {
       if (idx < 0) return fail_('ไม่พบรหัส ' + id);
       sh.deleteRow(idx);
       log_(role, 'delete', tab, id, '');
-      return json_({ ok: true, id: id });
+      bumpRev_();
+      return json_({ ok: true, id: id, rev: getRev_() });
     }
     if (action === 'replace') {
       const rows = body.rows || [];
@@ -532,7 +563,8 @@ function doPost(e) {
         sh.getRange(2, 1, vals.length, vals[0].length).setValues(vals);
       }
       log_(role, 'replace', tab, '', rows.length + ' แถว');
-      return json_({ ok: true, count: rows.length });
+      bumpRev_();
+      return json_({ ok: true, count: rows.length, rev: getRev_() });
     }
     return fail_('ไม่รู้จักคำสั่ง ' + action);
   } catch (err) {
@@ -547,6 +579,8 @@ function doPost(e) {
 /** รันจาก Apps Script editor หรือเมนู BCP นราธิวาส */
 function setupDatabase() {
   const msg = setupDatabase_();
+  PropertiesService.getScriptProperties().setProperty('SCHEMA_APPLIED', SCHEMA_VERSION);
+  bumpRev_();
   try { SpreadsheetApp.getUi().alert('BCP นราธิวาส', msg, SpreadsheetApp.getUi().ButtonSet.OK); } catch (e) { Logger.log(msg); }
 }
 
@@ -607,11 +641,12 @@ function setupDatabase_() {
   // ลบ Sheet1 เริ่มต้นถ้าว่าง
   const def1 = ss.getSheetByName('Sheet1') || ss.getSheetByName('ชีต1');
   if (def1 && def1.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(def1);
-  ss.setActiveSheet(ss.getSheetByName('Config'));
+  try { ss.setActiveSheet(ss.getSheetByName('Config')); } catch (e) { /* ไม่มี UI */ }
+  const trg = installAutoTriggers_();
   const rolesReady = ['admin', 'editor', 'viewer'].filter(function (r) { return !isDefaultToken_(tokenOf_(r)); });
   return 'ฐานข้อมูลพร้อมใช้งาน — สร้างใหม่ ' + created.length + ' แท็บ' + (created.length ? ' (' + created.join(', ') + ')' : '') +
     (repaired.length ? ' · ซ่อมแซม: ' + repaired.join(', ') : '') +
-    ' · Token ที่ตั้งแล้ว: ' + (rolesReady.length ? rolesReady.join(', ').toUpperCase() : 'ยังไม่มี (แก้ TOKENS ใน Code.gs)');
+    ' · Auto-sync trigger: ' + trg + ' · Token ที่ตั้งแล้ว: ' + (rolesReady.length ? rolesReady.join(', ').toUpperCase() : 'ยังไม่มี (แก้ TOKENS ใน Code.gs)');
 }
 
 /* ───────────────────────── สิทธิ์การแชร์ไฟล์ ───────────────────────── */
@@ -632,11 +667,39 @@ function unlockSharingFull() {
 }
 function alert_(m) { try { SpreadsheetApp.getUi().alert(m); } catch (e) { Logger.log(m); } }
 
+/* ───────────────────────── Auto-sync / Auto-maintenance ───────────────────────── */
+
+/** ติดตั้ง Trigger อัตโนมัติ (ไม่ติดตั้งซ้ำ): onChange → bump rev · รายชั่วโมง → ดูแลระบบ */
+function installAutoTriggers_() {
+  try {
+    const have = ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); });
+    const added = [];
+    if (have.indexOf('onChangeInstalled_') < 0) { ScriptApp.newTrigger('onChangeInstalled_').forSpreadsheet(ss_()).onChange().create(); added.push('onChange'); }
+    if (have.indexOf('autoMaintenance_') < 0) { ScriptApp.newTrigger('autoMaintenance_').timeBased().everyHours(1).create(); added.push('รายชั่วโมง'); }
+    return added.length ? 'ติดตั้ง ' + added.join(' + ') : 'พร้อมแล้ว';
+  } catch (e) { return 'ติดตั้งไม่ได้ (' + e.message + ') — รัน installAutoTriggers เอง'; }
+}
+function installAutoTriggers() { alert_(installAutoTriggers_()); }
+
+/** ทุกการเปลี่ยนแปลงใน Sheet (แก้มือ/แทรก/ลบ/วาง) → เพิ่ม rev เพื่อให้ Dashboard ซิงก์ */
+function onChangeInstalled_() { bumpRev_(); }
+
+/** ดูแลระบบรายชั่วโมง: ซ่อมโครงสร้างถ้าถูกแก้ + จำกัดขนาด Log */
+function autoMaintenance_() {
+  ensureSchema_();
+  const sh = ss_().getSheetByName('Log');
+  if (sh && sh.getLastRow() > 5500) {
+    sh.deleteRows(2, sh.getLastRow() - 5001);
+    bumpRev_();
+  }
+}
+
 /* ───────────────────────── เมนู / Trigger ───────────────────────── */
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('BCP นราธิวาส')
     .addItem('🏗 สร้าง/ซ่อมแซมฐานข้อมูล', 'setupDatabase')
+    .addItem('🔄 ติดตั้ง Auto-sync Trigger', 'installAutoTriggers')
     .addItem('ℹ ตรวจสอบสถานะระบบ', 'showStatus')
     .addSeparator()
     .addItem('🔒 แชร์: ส่วนตัว', 'lockSharingPrivate')
@@ -649,7 +712,7 @@ function showStatus() {
   const m = meta_();
   const roles = ['admin', 'editor', 'viewer'].map(function (r) { return r.toUpperCase() + ': ' + (isDefaultToken_(tokenOf_(r)) ? '❌ ยังไม่ได้ตั้งรหัส' : '✅ ตั้งแล้ว'); });
   const tabs = DB.order.map(function (t) { return (m.tabs[t] === null ? '❌ ' : '✅ ') + t + (m.tabs[t] === null ? '' : ' (' + m.tabs[t] + ')'); });
-  alert_('เวอร์ชัน ' + VERSION + '\n\nสิทธิ์\n' + roles.join('\n') + '\n\nแท็บ\n' + tabs.join('\n'));
+  alert_('เวอร์ชัน ' + VERSION + ' · สคีมา ' + SCHEMA_VERSION + ' · rev ' + getRev_() + '\n\nสิทธิ์\n' + roles.join('\n') + '\n\nแท็บ\n' + tabs.join('\n'));
 }
 
 /** ประทับเวลาเมื่อมีการแก้ไขโดยตรงใน Sheet (Simple trigger) */
@@ -665,5 +728,6 @@ function onEdit(e) {
     if (b >= 0 && e.range.getColumn() !== b + 1) sh.getRange(r, b + 1).setValue('sheet');
     const ci = head.indexOf('id');
     if (ci >= 0 && !sh.getRange(r, ci + 1).getValue()) sh.getRange(r, ci + 1).setValue(newId_(tab));
+    bumpRev_();
   } catch (x) { /* ignore */ }
 }

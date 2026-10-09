@@ -1,0 +1,6 @@
+#!/bin/sh
+# อัปเดต Code.gs + tools/schema.json อัตโนมัติทุกครั้งที่ commit (โครงสร้างมาจาก index.html)
+# เปิดใช้: git config core.hooksPath .githooks
+node tools/build.js >/dev/null || { echo "build Code.gs ล้มเหลว"; exit 1; }
+node tools/test_gas.js >/dev/null || { echo "ทดสอบ Code.gs ไม่ผ่าน (รัน node tools/test_gas.js)"; exit 1; }
+git add Code.gs tools/schema.json

@@ -1,0 +1,27 @@
+name: Build Code.gs
+# ทุกครั้งที่ index.html หรือเครื่องมือเปลี่ยน → สร้าง Code.gs ใหม่, ทดสอบ, แล้ว commit กลับอัตโนมัติ
+on:
+  push:
+    branches: [main]
+    paths: ['index.html', 'tools/Code.template.gs', 'tools/build.js']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node tools/build.js
+      - run: node tools/test_gas.js
+      - name: Commit Code.gs if changed
+        run: |
+          if ! git diff --quiet -- Code.gs tools/schema.json; then
+            git config user.name "github-actions"
+            git config user.email "actions@users.noreply.github.com"
+            git add Code.gs tools/schema.json
+            git commit -m "chore: auto-rebuild Code.gs from index.html schema [skip ci]"
+            git push
+          fi

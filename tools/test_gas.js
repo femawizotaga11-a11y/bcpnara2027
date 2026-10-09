@@ -24,6 +24,7 @@ class Sheet {
   getRange(r, c, nr = 1, nc = 1) { return new Range(this, r, c, nr, nc); }
   appendRow(a) { this.d.push(a); }
   deleteRow(i) { this.d.splice(i - 1, 1); }
+  deleteRows(i, n) { this.d.splice(i - 1, n); }
   setFrozenRows() {} setColumnWidth() {} setTabColor() {}
 }
 const sheets = {};
@@ -32,15 +33,18 @@ const ssObj = { getId: () => 'SSID', getName: () => 'TestBook', getUrl: () => 'h
 const props = {};
 const sharing = [];
 global.SpreadsheetApp = { getActiveSpreadsheet: () => ssObj, newDataValidation: () => ({ requireValueInList() { return this; }, setAllowInvalid() { return this; }, build() { return {}; } }), getUi: () => { throw new Error('no ui'); } };
-global.PropertiesService = { getScriptProperties: () => ({ getProperty: k => props[k] || null }) };
+global.PropertiesService = { getScriptProperties: () => ({ getProperty: k => props[k] || null, setProperty: (k, v) => { props[k] = v; } }) };
 global.LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) };
 global.Utilities = { formatDate: (d, tz, f) => d.toISOString().slice(0, f.startsWith('yyyy-MM-dd\'T') ? 19 : 10) };
 global.ContentService = { MimeType: { JSON: 'json' }, createTextOutput: t => ({ t, setMimeType() { return this; }, getContent: () => t }) };
 global.DriveApp = { Access: { ANYONE_WITH_LINK: 'ANY', PRIVATE: 'PRIV' }, Permission: { EDIT: 'EDIT', VIEW: 'VIEW', NONE: 'NONE' }, getFileById: () => ({ setSharing: (a, p) => sharing.push([a, p]) }) };
 global.Logger = { log() {} };
+const triggers = [];
+global.ScriptApp = { getProjectTriggers: () => triggers.map(h => ({ getHandlerFunction: () => h })),
+  newTrigger: h => { const o = { forSpreadsheet() { return o; }, onChange() { return o; }, timeBased() { return o; }, everyHours() { return o; }, create() { triggers.push(h); } }; return o; } };
 
 // โหลด Code.gs แล้วเปิดเผยฟังก์ชันที่ต้องทดสอบ
-const api = new Function(code + '\nreturn {doGet,doPost,setupDatabase_,TOKENS,DB};')();
+const api = new Function(code + '\nreturn {doGet,doPost,setupDatabase_,TOKENS,DB,SCHEMA_VERSION,autoMaintenance_,onChangeInstalled_,installAutoTriggers_};')();
 const post = (o) => JSON.parse(api.doPost({ postData: { contents: JSON.stringify(o) } }).getContent());
 const get = (p) => JSON.parse(api.doGet({ parameter: p }).getContent());
 let n = 0; const ok = (name, fn) => { try { fn(); n++; console.log('  ✓', name); } catch (e) { console.log('  ✗', name, '\n    ', e.message); process.exitCode = 1; } };
@@ -127,4 +131,38 @@ ok('ปฏิเสธแท็บ/คำสั่งที่ไม่รู้
   assert.ok(/JSON/.test(JSON.parse(api.doPost({ postData: { contents: '{bad' } }).getContent()).error));
 });
 ok('readAll คืนครบ 16 แท็บ + meta', () => { const r = get({ action: 'readAll', token: 'V1' }); assert.strictEqual(Object.keys(r.data).length, 16); assert.strictEqual(r.meta.name, 'TestBook'); });
+ok('SCHEMA_VERSION ตรงกับที่ Dashboard คำนวณ (index.html)', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const a = html.indexOf('/* SCHEMA_DEF_START'), b = html.indexOf('/* SCHEMA_DEF_END */');
+  const v = new Function(html.slice(a, b) + '; return schemaVer();')();
+  assert.strictEqual(v, api.SCHEMA_VERSION);
+  assert.strictEqual(get({ action: 'ping' }).schemaVersion, v);
+});
+ok('Auto-sync: rev เปลี่ยนทุกครั้งที่เขียน/แก้ใน Sheet และ action=rev เบา+ต้องมีสิทธิ์', () => {
+  const r0 = get({ action: 'rev', token: 'V1' }).rev;
+  assert.ok(post({ action: 'create', token: 'E1', tab: 'Roads', row: { route: 'rev-test', status: 'ผ่านได้' } }).ok);
+  const r1 = get({ action: 'rev', token: 'V1' }).rev; assert.notStrictEqual(r1, r0);
+  api.onChangeInstalled_(); const r2 = get({ action: 'rev', token: 'V1' }).rev; assert.notStrictEqual(r2, r1);
+  assert.strictEqual(get({ action: 'rev', token: 'V1' }).rev, r2, 'ไม่มีการเขียน rev ต้องคงเดิม');
+  assert.strictEqual(get({ action: 'rev', token: 'bad' }).ok, false);
+  assert.strictEqual(get({ action: 'readAll', token: 'V1' }).rev, r2);
+});
+ok('Auto-update: โครงสร้างเปลี่ยน → ซ่อมแซมแท็บ/คอลัมน์ให้เองในคำขอแรก', () => {
+  delete sheets.Staff;                                  // แท็บหาย
+  sheets.Hospitals.d.forEach(r => r.splice(sheets.Hospitals.d[0].indexOf('rto_hr'), 1)); // คอลัมน์หาย
+  props.SCHEMA_APPLIED = 'old-version';                 // จำลอง deploy เวอร์ชันใหม่
+  const r = get({ action: 'readAll', token: 'V1' });
+  assert.ok(r.ok && sheets.Staff, 'ต้องสร้างแท็บ Staff กลับมา');
+  assert.ok(sheets.Hospitals.d[0].includes('rto_hr'), 'ต้องเพิ่มคอลัมน์ rto_hr กลับมา');
+  assert.strictEqual(props.SCHEMA_APPLIED, api.SCHEMA_VERSION);
+});
+ok('Trigger ติดตั้งอัตโนมัติครั้งเดียว (ไม่ซ้ำ)', () => {
+  assert.deepStrictEqual(triggers.sort(), ['autoMaintenance_', 'onChangeInstalled_']);
+  api.installAutoTriggers_(); assert.strictEqual(triggers.length, 2);
+});
+ok('autoMaintenance จำกัดขนาด Log และแจ้ง rev', () => {
+  const log = sheets.Log; for (let i = 0; i < 6000; i++) log.d.push(['LOG-' + i, 't', 'u', 'a', 't', '', '', '', '']);
+  const r0 = props.REV; api.autoMaintenance_();
+  assert.ok(log.getLastRow() <= 5001 + 1); assert.notStrictEqual(props.REV, r0);
+});
 console.log(n + ' tests passed' + (process.exitCode ? ' (มีข้อผิดพลาด)' : ''));
