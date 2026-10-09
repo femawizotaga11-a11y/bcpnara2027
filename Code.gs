@@ -18,7 +18,7 @@
  *
  *  วิธีติดตั้ง
  *   1) เปิด Google Sheet → Extensions → Apps Script → วางโค้ดนี้แทนของเดิม → Save
- *   2) TOKENS ด้านล่าง: ตอนนี้ตั้ง ADMIN = 'admin' แล้ว (EDITOR/VIEWER ยังปิดอยู่จนกว่าจะแก้เป็นรหัสของคุณ — ค่าที่มี 'เปลี่ยนรหัสนี้' จะถูกปฏิเสธ)
+ *   2) TOKENS ด้านล่าง: ตอนนี้ ADMIN = EDITOR = 'admin' (VIEWER ยังปิดอยู่จนกว่าจะแก้เป็นรหัสของคุณ — ค่าที่มี 'เปลี่ยนรหัสนี้' จะถูกปฏิเสธ)
  *   3) เลือกฟังก์ชัน setupDatabase → Run → อนุญาตสิทธิ์ (Sheets, Drive)
  *   4) Deploy → New deployment → Web app → Execute as: Me · Who has access: Anyone
  *   5) คัดลอก URL /exec + Token ไปวางในเมนู "Sheet & GAS" ของ Dashboard
@@ -33,7 +33,7 @@ const SCHEMA_VERSION = '1eb6cni';
 /** รหัสผ่านแต่ละระดับ — แก้ก่อนใช้งานจริง (หรือเก็บใน Project Settings → Script properties: TOKEN_ADMIN / TOKEN_EDITOR / TOKEN_VIEWER) */
 const TOKENS = {
   admin:  'admin',                  // Full: CRUD + Push ทั้งแท็บ + สร้างฐานข้อมูล + จัดการการแชร์ (⚠ รหัสสั้น เดาง่าย — แนะนำตั้ง TOKEN_ADMIN ใน Script properties แทน)
-  editor: 'EDITOR-เปลี่ยนรหัสนี้',  // เพิ่ม/แก้ไข/ลบ รายแถว
+  editor: 'admin',                  // เพิ่ม/แก้ไข/ลบ รายแถว (ตอนนี้ใช้รหัสเดียวกับ ADMIN จึงถูกตีความเป็น ADMIN เสมอ — ตั้งรหัสต่างกันหากต้องการแยกสิทธิ์)
   viewer: 'VIEWER-เปลี่ยนรหัสนี้'   // อ่านอย่างเดียว (ข้อมูลส่วนบุคคลถูกปิดบัง)
 };
 
