@@ -121,6 +121,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac)}
 .sw input{width:auto}
 td input{padding:4px 6px;font-size:.78rem;min-width:70px}
 pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.72rem;overflow:auto;max-height:300px}
+#fm.on{display:grid}
 #toast{position:fixed;top:76px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px}
 .ts{padding:10px 16px;border-radius:12px;background:var(--bg2);border:1px solid var(--ac);box-shadow:var(--shadow);font-size:.82rem;animation:in .3s}
 @keyframes in{from{transform:translateX(40px);opacity:0}}
@@ -145,7 +146,7 @@ pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.
   <span class="pill"><span class="dot" id="dot"></span><span id="st">กำลังเชื่อมต่อ…</span></span>
   <span class="pill mono" id="clock">--:--:--</span>
   <button id="bRef" title="รีเฟรชข้อมูล">⟳ รีเฟรช</button>
-  <button id="bEdit" title="แก้ไขข้อมูลใน Google Sheet">✎ จัดการข้อมูล</button>
+  <button id="bEdit" title="เพิ่ม/แก้ไข/ลบข้อมูล">✎ ป้อนข้อมูล</button>
   <button id="bSet" class="pri">⚙ ตั้งค่า</button>
 </header>
 
@@ -232,11 +233,20 @@ pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.
 
 <!-- Editor -->
 <aside class="dr wide" id="drEd">
-  <div class="dh">✎ จัดการข้อมูล · ซิงก์กับ Google Sheet<span class="sp"></span><span class="pill" id="edState"></span>&nbsp;<button data-close>✕</button></div>
-  <div class="db"><div class="tabs" id="edTabs"></div><div class="sc" style="max-height:62vh"><table id="edTbl"></table></div>
-    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button id="edAdd">＋ เพิ่มแถว</button><button id="edCsv">⬇ ส่งออก CSV</button><span class="sp"></span><button class="pri" id="edSave">💾 บันทึกลง Google Sheet</button></div>
-    <div class="hint" id="edHint"></div></div>
+  <div class="dh">✎ ป้อนข้อมูล (CRUD)<span class="sp"></span><span class="pill" id="edState"></span>&nbsp;<button data-close>✕</button></div>
+  <div class="db"><div class="tabs" id="edTabs"></div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+      <input id="edQ" placeholder="🔍 ค้นหา…" style="max-width:240px"><span class="hint" id="edCnt"></span><span class="sp"></span>
+      <button class="pri" data-w id="edNew">＋ เพิ่มข้อมูล</button><button data-w id="edImp">⬆ นำเข้า CSV</button><button id="edCsv">⬇ ส่งออก CSV</button>
+      <button data-w id="edAll" title="ส่งข้อมูลทุกแท็บขึ้น Google Sheet">📤 ส่งทุกแท็บขึ้น Sheet</button><button data-w class="dng" id="edRst">↺ คืนค่าตัวอย่าง</button>
+      <input type="file" id="edFile" accept=".csv" hidden></div>
+    <div class="sc" style="max-height:58vh"><table id="edTbl"></table></div>
+    <div style="display:flex;justify-content:space-between;gap:10px;margin-top:10px"><div class="hint" id="edHint"></div><span class="pill" id="edSync">พร้อม</span></div></div>
 </aside>
+<div class="ov" id="fm" style="z-index:150;place-items:center"><div class="dr on" style="position:static;transform:none;width:min(520px,94vw);max-height:90vh;border:1px solid var(--card-b);border-radius:18px;margin:auto">
+  <div class="dh"><span id="fmTitle"></span><span class="sp"></span><button id="fmX">✕</button></div>
+  <div class="db" id="fmBody"></div>
+  <div class="dh" style="border-top:1px solid var(--card-b);border-bottom:0;gap:8px"><span class="sp"></span><button id="fmNo">ยกเลิก</button><button class="pri" id="fmOk">💾 บันทึก</button></div></div></div>
 
 <!-- Code viewer -->
 <aside class="dr" id="drCode">
@@ -317,10 +327,11 @@ async function fetchTab(key){
     .filter(r=>r.some(x=>x!==''));
 }
 async function refresh(manual){
+  if(!manual&&Date.now()<holdUntil)return;
   setState('load');
   try{
     if(S.demo||!sheetId()){
-      DATA={};for(const k in SCHEMA)DATA[k]=SCHEMA[k].rows.map(r=>r.map(String));
+      {const L=localGet();DATA={};for(const k in SCHEMA)DATA[k]=(L[k]||SCHEMA[k].rows).map(r=>r.map(String))}
       setState('demo');
     }else{
       const keys=Object.keys(SCHEMA);const res=await Promise.all(keys.map(k=>fetchTab(k).catch(e=>{console.warn(e);return null})));
@@ -503,7 +514,6 @@ function applyLook(){
   document.documentElement.dataset.theme=S.theme;document.documentElement.style.setProperty('--ac',S.acc);
   $('#orgTitle').textContent=S.title;document.title=S.title;
   document.body.style.setProperty('--anim',S.anim?1:0);
-  $('#bEdit').title=S.script&&S.token?'':'ต้องตั้งค่า Apps Script ก่อนจึงจะบันทึกได้';
 }
 function collect(){
   S.sheet=$('#sSheet').value.trim();S.demo=$('#sDemo').checked;S.interval=+$('#sInt').value;S.script=$('#sScript').value.trim();S.token=$('#sToken').value;
@@ -511,28 +521,112 @@ function collect(){
   S.r24=num($('#sR24').value);S.r72=num($('#sR72').value);S.aut=num($('#sAut').value);S.bcp=num($('#sBcp').value);S.sound=$('#sSnd').checked;S.notify=$('#sNote').checked;
   S.title=$('#sTitle').value;S.theme=$('#sTheme').value;S.acc=$('#sAcc').value;S.map=$('#sMap').value||DEF.map;S.anim=$('#sAnim').checked;
 }
-/* ============ Editor (เขียนกลับ Google Sheet) ============ */
+/* ============ CRUD ป้อนข้อมูล (สร้าง · อ่าน · แก้ไข · ลบ) ============ */
 const canWrite=()=>!!(S.script&&S.token);
+const LK='bcpnara.local.v1';
+const localGet=()=>{try{return JSON.parse(localStorage.getItem(LK)||'{}')}catch(e){return {}}};
+const localSet=o=>{try{localStorage.setItem(LK,JSON.stringify(o))}catch(e){}};
+const LVL=['แดง','ส้ม','เหลือง','เขียว','ปกติ'],SEV=['เสี่ยงสูง','น้ำเพิ่ม','ท่วมขัง','เฝ้าระวัง','ปกติ'],LED=[['G','G · ปกติ'],['Y','Y · จำกัด'],['R','R · หยุดให้บริการ'],['N','N · ไม่มีบริการ']];
+const sel=o=>({t:'select',o});const nm={t:'number'};
+const FIELDS={
+ KPI:{key:{l:'รหัสตัวชี้วัด'},value:{l:'ค่า',req:1},unit:{l:'หน่วย'},note:{l:'หมายเหตุ'}},
+ Districts:{district:{l:'อำเภอ',t:'select',o:['เมืองนราธิวาส','ตากใบ','บาเจาะ','ยี่งอ','ระแงะ','รือเสาะ','ศรีสาคร','แว้ง','สุคิริน','สุไหงโก-ลก','สุไหงปาดี','จะแนะ','เจาะไอร้อง']},level:{l:'ระดับความเสี่ยง',...sel(LVL)},trend:{l:'แนวโน้ม',...sel(['↑↑','↑','→','↓'])},
+  h6:{l:'คาดการณ์ 6 ชม.',...sel(SEV)},h12:{l:'คาดการณ์ 12 ชม.',...sel(SEV)},h24:{l:'คาดการณ์ 24 ชม.',...sel(SEV)},vulnerable:{l:'ผู้ป่วยเปราะบาง (ราย)',...nm}},
+ Hospitals:{name:{l:'โรงพยาบาล'},tier:{l:'ระดับ',...sel(['A+','A','S+','S','M','F'])},level:{l:'สถานะ',...sel(LVL)},ER:{l:'ER',...sel(LED)},LR:{l:'LR ห้องคลอด',...sel(LED)},OR:{l:'OR ห้องผ่าตัด',...sel(LED)},
+  ICU:{l:'ICU',...sel(LED)},Dialysis:{l:'Dialysis',...sel(LED)},OPD:{l:'OPD/NCD',...sel(LED)},autonomy_hr:{l:'Autonomy (ชม.)',...nm}},
+ RPH:{status:{l:'สถานะ'},count:{l:'จำนวน (แห่ง)',...nm}},
+ Vulnerable:{category:{l:'กลุ่มผู้ป่วย'},count:{l:'จำนวน (ราย)',...nm}},
+ Resources:{name:{l:'ทรัพยากร'},amount:{l:'ปริมาณ'},unit:{l:'หน่วย'},status:{l:'สถานะ',...sel(['พร้อม','เฝ้าระวัง','วิกฤต'])}},
+ Roads:{route:{l:'เส้นทาง'},type:{l:'ประเภท',...sel(['หลัก','สำรอง'])},status:{l:'สถานะ',...sel(['ผ่านได้','เสี่ยง','ตัดขาด'])},note:{l:'หมายเหตุ',t:'textarea'}},
+ BCP:{no:{l:'ข้อที่',...nm},title:{l:'หัวข้อ',t:'textarea'},status:{l:'สถานะ',...sel(['รอดำเนินการ','ดำเนินการ','เสร็จสิ้น'])},progress:{l:'ความคืบหน้า (%)',...nm,min:0,max:100},owner:{l:'ผู้รับผิดชอบ'},note:{l:'หมายเหตุ',t:'textarea'}}
+};
+const fmeta=(k,c)=>FIELDS[k]?.[c]||{l:c};
+const optV=o=>Array.isArray(o)?o[0]:o,optL=o=>Array.isArray(o)?o[1]:o;
+let edQ='',edIdx=-1,holdUntil=0;
 function openEditor(){
-  $('#edTabs').innerHTML=Object.keys(SCHEMA).map(k=>`<button data-et="${k}">${SCHEMA[k].label}</button>`).join('');
-  $$('[data-et]').forEach(b=>b.onclick=()=>loadEd(b.dataset.et));loadEd(edTab);openDr('#drEd');
+  $('#edTabs').innerHTML=Object.keys(SCHEMA).map(k=>`<button data-et="${k}">${SCHEMA[k].label} <small class="mono">${(DATA[k]||[]).length}</small></button>`).join('');
+  $$('[data-et]').forEach(b=>b.onclick=()=>{edTab=b.dataset.et;edQ='';$('#edQ').value='';drawEd()});
+  drawEd();openDr('#drEd');
 }
-function loadEd(k){edTab=k;edRows=(DATA[k]||[]).map(r=>[...r]);$$('[data-et]').forEach(b=>b.classList.toggle('on',b.dataset.et===k));drawEd();
-  $('#edState').textContent=canWrite()?'🔓 ปลดล็อกแล้ว':'🔒 อ่านอย่างเดียว';
-  $('#edHint').textContent=canWrite()?'แก้ไขแล้วกด "บันทึกลง Google Sheet" – ระบบจะเขียนทับทั้งแท็บ "'+S.tabs[k]+'"':'ใส่ Apps Script URL + รหัสในเมนูตั้งค่าเพื่อบันทึกกลับ (ตอนนี้แก้ได้เฉพาะในหน้านี้/ส่งออก CSV)'}
-function drawEd(){const cols=SCHEMA[edTab].cols;
-  $('#edTbl').innerHTML='<tr><th>#</th>'+cols.map(c=>`<th>${c}</th>`).join('')+'<th></th></tr>'+edRows.map((r,i)=>`<tr><td class="mono">${i+1}</td>${cols.map((_,j)=>`<td><input data-r="${i}" data-c="${j}" value="${esc(r[j]??'')}"></td>`).join('')}<td><button data-del="${i}">🗑</button></td></tr>`).join('');
-  $$('#edTbl input').forEach(i=>i.oninput=()=>{edRows[i.dataset.r][i.dataset.c]=i.value});
-  $$('[data-del]').forEach(b=>b.onclick=()=>{edRows.splice(+b.dataset.del,1);drawEd()})}
-async function edSave(){
-  if(!canWrite())return toast('🔒 ยังไม่ได้ตั้งค่า Apps Script');
-  DATA[edTab]=edRows.map(r=>[...r]);
-  if(S.demo){lastSig='';render(true);return toast('โหมดสาธิต: อัปเดตเฉพาะหน้านี้ (ปิดโหมดสาธิตเพื่อเขียนลง Sheet)')}
-  try{
-    const body=JSON.stringify({token:S.token,action:'replace',sheet:S.tabs[edTab],header:SCHEMA[edTab].cols,rows:edRows});
-    await fetch(S.script,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body});
-    toast('✓ ส่งข้อมูลไปยัง Google Sheet แล้ว');setTimeout(()=>refresh(),1800);
-  }catch(e){toast('บันทึกไม่สำเร็จ: '+e.message)}
+function edAccess(){
+  const ok=S.demo||canWrite();
+  $('#edState').textContent=S.demo?'🧪 โหมดสาธิต · บันทึกในเบราว์เซอร์':canWrite()?'🔓 ปลดล็อก · ซิงก์ Google Sheet':'🔒 อ่านอย่างเดียว';
+  $('#edHint').innerHTML=ok?(S.demo?'โหมดสาธิต: ข้อมูลที่ป้อนเก็บในเบราว์เซอร์นี้ (ปิดโหมดสาธิต + ตั้งค่า Apps Script เพื่อบันทึกลง Google Sheet)':'ทุกการเพิ่ม/แก้ไข/ลบ จะบันทึกลงแท็บ <b>'+esc(S.tabs[edTab])+'</b> ใน Google Sheet ทันที'):
+   '🔒 ยังเพิ่ม/แก้ไข/ลบไม่ได้ — ไปที่ <b>ตั้งค่า → ปลดล็อกการเขียนข้อมูล</b> เพื่อใส่ Apps Script URL และรหัสผ่าน (หรือเปิดโหมดสาธิตเพื่อทดลอง)';
+  $$('#drEd [data-w]').forEach(b=>b.disabled=!ok);return ok;
+}
+function drawEd(){
+  const cols=SCHEMA[edTab].cols,rows=DATA[edTab]||[];
+  $$('[data-et]').forEach(b=>b.classList.toggle('on',b.dataset.et===edTab));
+  $$('[data-et] small').forEach(s=>s.textContent=(DATA[s.parentElement.dataset.et]||[]).length);
+  const q=edQ.trim().toLowerCase();
+  const view=rows.map((r,i)=>[r,i]).filter(([r])=>!q||r.join(' ').toLowerCase().includes(q));
+  $('#edCnt').textContent=view.length+' / '+rows.length+' รายการ';
+  $('#edTbl').innerHTML='<tr><th>#</th>'+cols.map(c=>`<th>${esc(fmeta(edTab,c).l)}</th>`).join('')+'<th style="width:118px">จัดการ</th></tr>'+
+   (view.map(([r,i])=>`<tr><td class="mono">${i+1}</td>${cols.map((c,j)=>`<td>${esc(optLabel(edTab,c,r[j]))}</td>`).join('')}<td><button data-w data-ed="${i}" title="แก้ไข">✎</button> <button data-w data-cp="${i}" title="ทำสำเนา">⧉</button> <button data-w class="dng" data-del="${i}" title="ลบ">🗑</button></td></tr>`).join('')||`<tr><td colspan="${cols.length+2}" class="hint" style="padding:22px;text-align:center">ไม่มีข้อมูล — กด "＋ เพิ่มข้อมูล" เพื่อเริ่มป้อน</td></tr>`);
+  $$('[data-ed]').forEach(b=>b.onclick=()=>openForm(+b.dataset.ed));
+  $$('[data-cp]').forEach(b=>b.onclick=()=>openForm(-1,[...rows[+b.dataset.cp]]));
+  $$('[data-del]').forEach(b=>b.onclick=()=>delRow(+b.dataset.del));
+  edAccess();
+}
+function optLabel(k,c,v){const m=fmeta(k,c);if(m.t==='select'){const o=m.o.find(o=>optV(o)===v);if(o)return optL(o)}return v}
+function openForm(i,preset){
+  if(!edAccess())return toast('🔒 ยังไม่ได้ปลดล็อกการเขียนข้อมูล');
+  edIdx=i;const cols=SCHEMA[edTab].cols,r=preset||(i>=0?DATA[edTab][i]:cols.map(()=>''));
+  $('#fmTitle').textContent=(i>=0?'แก้ไข':'เพิ่ม')+'ข้อมูล · '+SCHEMA[edTab].label;
+  $('#fmBody').innerHTML=cols.map((c,j)=>{const m=fmeta(edTab,c),v=r[j]??'',id='f_'+c;
+    let inp;
+    if(m.t==='select'){const has=m.o.some(o=>optV(o)===v);inp=`<select id="${id}">${v&&!has?`<option>${esc(v)}</option>`:''}${m.o.map(o=>`<option value="${esc(optV(o))}" ${optV(o)===v?'selected':''}>${esc(optL(o))}</option>`).join('')}</select>`}
+    else if(m.t==='textarea')inp=`<textarea id="${id}" rows="2">${esc(v)}</textarea>`;
+    else inp=`<input id="${id}" value="${esc(v)}" ${m.t==='number'?`type="number" step="any" ${m.min!=null?`min="${m.min}" max="${m.max}"`:''}`:''}>`;
+    return `<label>${esc(m.l)} <small style="opacity:.6">${esc(c)}</small></label>${inp}`}).join('');
+  $('#fm').classList.add('on');$('#fmBody').querySelector('input,select,textarea')?.focus();
+}
+function formValues(){return SCHEMA[edTab].cols.map(c=>String($('#f_'+c).value).trim())}
+async function saveForm(){
+  const cols=SCHEMA[edTab].cols,v=formValues();
+  for(let j=0;j<cols.length;j++){const m=fmeta(edTab,cols[j]);
+    if(j===0&&!v[0])return toast('กรุณากรอก "'+m.l+'"');
+    if(m.t==='number'&&v[j]!==''&&isNaN(+v[j]))return toast('"'+m.l+'" ต้องเป็นตัวเลข');
+    if(m.min!=null&&v[j]!==''&&(+v[j]<m.min||+v[j]>m.max))return toast('"'+m.l+'" ต้องอยู่ระหว่าง '+m.min+'–'+m.max)}
+  const rows=DATA[edTab]||(DATA[edTab]=[]);
+  if(edIdx<0&&(edTab==='KPI'||edTab==='Districts')&&rows.some(r=>r[0]===v[0]))return toast('มี "'+v[0]+'" อยู่แล้ว — ใช้ปุ่มแก้ไขแทน');
+  if(edIdx>=0)rows[edIdx]=v;else rows.push(v);
+  $('#fm').classList.remove('on');await commit(edIdx>=0?'แก้ไขแล้ว':'เพิ่มข้อมูลแล้ว');
+}
+async function delRow(i){
+  if(!edAccess())return;const r=DATA[edTab][i];
+  if(!confirm('ลบรายการนี้?\n\n'+r.slice(0,3).join(' · ')))return;
+  DATA[edTab].splice(i,1);await commit('ลบแล้ว');
+}
+async function pushTab(k){
+  const body=JSON.stringify({token:S.token,action:'replace',sheet:S.tabs[k],header:SCHEMA[k].cols,rows:DATA[k]||[]});
+  await fetch(S.script,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body});
+}
+async function commit(msg){
+  holdUntil=Date.now()+4000;lastSig='';render(true);drawEd();
+  if(S.demo){const L=localGet();L[edTab]=DATA[edTab];localSet(L);return toast('✓ '+msg+' (บันทึกในเบราว์เซอร์)')}
+  try{setSync('⏳ กำลังบันทึก…');await pushTab(edTab);setSync('✓ ซิงก์ Google Sheet แล้ว');toast('✓ '+msg+' → Google Sheet');setTimeout(()=>refresh(),2200)}
+  catch(e){setSync('✗ บันทึกไม่สำเร็จ');toast('บันทึกไม่สำเร็จ: '+e.message)}
+}
+const setSync=t=>$('#edSync').textContent=t;
+async function pushAll(){
+  if(S.demo||!canWrite())return toast('ต้องปิดโหมดสาธิต และตั้งค่า Apps Script ก่อน');
+  if(!confirm('ส่งข้อมูลทุกแท็บขึ้น Google Sheet (เขียนทับข้อมูลเดิมในแท็บ)?'))return;
+  for(const k of Object.keys(SCHEMA)){setSync('⏳ '+k);await pushTab(k)}
+  setSync('✓ ส่งครบทุกแท็บ');toast('✓ ส่งข้อมูลทุกแท็บแล้ว');setTimeout(()=>refresh(),2500);
+}
+function parseCsv(t){const out=[];let r=[],c='',q=false;t=t.replace(/^﻿/,'');
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch=='"'&&t[i+1]=='"'){c+='"';i++}else if(ch=='"')q=false;else c+=ch}
+    else if(ch=='"')q=true;else if(ch==','){r.push(c);c=''}else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;r.push(c);out.push(r);r=[];c=''}else c+=ch}
+  if(c!==''||r.length){r.push(c);out.push(r)}return out.filter(r=>r.some(x=>x!==''))}
+async function importCsv(file){
+  if(!edAccess())return toast('🔒 ยังไม่ได้ปลดล็อกการเขียนข้อมูล');
+  const rows=parseCsv(await file.text()),cols=SCHEMA[edTab].cols;
+  if(!rows.length||rows[0].join()!==cols.join())return toast('หัวคอลัมน์ไม่ตรง ต้องเป็น: '+cols.join(', '));
+  if(!confirm('นำเข้า '+(rows.length-1)+' แถว และเขียนทับข้อมูลแท็บนี้?'))return;
+  DATA[edTab]=rows.slice(1).map(r=>cols.map((_,j)=>r[j]??''));await commit('นำเข้า CSV แล้ว');
 }
 const toCsv=(cols,rows)=>'﻿'+[cols,...rows].map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
 function dl(name,txt,type='text/csv'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:type+';charset=utf-8'}));a.download=name;a.click()}
@@ -576,9 +670,14 @@ $('#bExp').onclick=()=>dl('bcp-settings.json',JSON.stringify(S,null,2),'applicat
 $('#bImp').onclick=()=>$('#fImp').click();
 $('#fImp').onchange=async e=>{try{S={...DEF,...JSON.parse(await e.target.files[0].text())};save();fillSettings();toast('นำเข้าแล้ว กด "บันทึก" เพื่อใช้งาน')}catch(x){toast('ไฟล์ไม่ถูกต้อง')}};
 $('#bRst').onclick=()=>{if(confirm('รีเซ็ตการตั้งค่าทั้งหมด?')){localStorage.removeItem(LS);location.reload()}};
-$('#edAdd').onclick=()=>{edRows.push(SCHEMA[edTab].cols.map(()=>''));drawEd()};
-$('#edCsv').onclick=()=>dl(edTab+'.csv',toCsv(SCHEMA[edTab].cols,edRows));
-$('#edSave').onclick=edSave;
+$('#edNew').onclick=()=>openForm(-1);
+$('#edQ').oninput=e=>{edQ=e.target.value;drawEd()};
+$('#edCsv').onclick=()=>dl(edTab+'.csv',toCsv(SCHEMA[edTab].cols,DATA[edTab]||[]));
+$('#edImp').onclick=()=>$('#edFile').click();$('#edFile').onchange=e=>{if(e.target.files[0])importCsv(e.target.files[0]);e.target.value=''};
+$('#edAll').onclick=pushAll;
+$('#edRst').onclick=async()=>{if(!confirm('คืนค่าตัวอย่างของแท็บนี้?'))return;DATA[edTab]=SCHEMA[edTab].rows.map(r=>r.map(String));await commit('คืนค่าตัวอย่างแล้ว')};
+$('#fmOk').onclick=saveForm;$('#fmNo').onclick=$('#fmX').onclick=()=>$('#fm').classList.remove('on');
+document.addEventListener('keydown',e=>{if($('#fm').classList.contains('on')){if(e.key==='Escape'){$('#fm').classList.remove('on');e.stopPropagation()}else if(e.key==='Enter'&&e.target.tagName!=='TEXTAREA'){e.preventDefault();saveForm()}}},true);
 setInterval(()=>$('#clock').textContent=new Date().toLocaleTimeString('th-TH'),1000);
 
 /* ============ Boot ============ */
