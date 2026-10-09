@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="th" data-theme="dark">
+<html lang="th" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -9,15 +9,40 @@
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#050b1a;--bg2:#0a1630;--card:rgba(16,30,62,.74);--cb:rgba(120,170,255,.17);--tx:#e8f0ff;--mu:#8ea3c7;--ac:#38bdf8;--ac2:#818cf8;
- --red:#ef4444;--org:#f97316;--yel:#facc15;--grn:#22c55e;--blu:#3b82f6;--pink:#ec4899;--sh:0 10px 40px rgba(0,0,0,.45);--grid:rgba(255,255,255,.07);--side:#071127}
-:root[data-theme="light"]{--bg:#eaf1fb;--bg2:#dbe7f7;--card:rgba(255,255,255,.88);--cb:rgba(30,64,130,.15);--tx:#0f1f3d;--mu:#587099;--sh:0 8px 28px rgba(30,64,130,.14);--grid:rgba(0,0,0,.08);--side:#f4f8ff}
+ --red:#ef4444;--org:#f97316;--yel:#facc15;--grn:#22c55e;--blu:#3b82f6;--pink:#ec4899;--sh:0 10px 40px rgba(0,0,0,.45);--grid:rgba(255,255,255,.07);--side:#071127;--pri-tx:#04122b}
+:root[data-theme="light"]{--bg:#f4f7ff;--bg2:#ffffff;--card:rgba(255,255,255,.95);--cb:rgba(79,70,229,.17);--tx:#16213e;--mu:#5a6a8a;--ac:#4f46e5;--ac2:#06b6d4;--red:#e11d48;--org:#f97316;--yel:#f59e0b;--grn:#10b981;--blu:#2563eb;--pink:#db2777;--sh:0 8px 28px rgba(79,70,229,.13);--grid:rgba(22,33,62,.07);--side:#ffffff;--pri-tx:#ffffff}
+:root[data-theme="light"] body{background:radial-gradient(900px 520px at 6% -8%,rgba(99,102,241,.22),transparent 60%),radial-gradient(800px 480px at 100% 0,rgba(6,182,212,.22),transparent 60%),radial-gradient(700px 520px at 62% 105%,rgba(236,72,153,.12),transparent 60%),var(--bg);background-attachment:fixed}
+:root[data-theme="light"] header{background:rgba(255,255,255,.9);border-bottom:3px solid transparent;border-image:linear-gradient(90deg,#4f46e5,#06b6d4,#10b981,#f59e0b,#ec4899) 1}
+:root[data-theme="light"] .logo{background:linear-gradient(135deg,#4f46e5,#06b6d4);box-shadow:0 6px 18px rgba(79,70,229,.35)}
+:root[data-theme="light"] .ttl h1{color:#312e81}
+:root[data-theme="light"] nav{border-right:1px solid var(--cb);box-shadow:4px 0 24px rgba(79,70,229,.06)}
+:root[data-theme="light"] nav h4{color:#4f46e5;font-weight:600}
+:root[data-theme="light"] nav a:hover{background:rgba(79,70,229,.07)}
+:root[data-theme="light"] nav a.on{background:linear-gradient(90deg,rgba(79,70,229,.15),rgba(6,182,212,.12));border-color:rgba(79,70,229,.4);color:#312e81}
+:root[data-theme="light"] nav a b{background:linear-gradient(135deg,#4f46e5,#06b6d4);color:#fff}
+:root[data-theme="light"] .card{box-shadow:var(--sh),inset 0 3px 0 var(--ac)}
+:root[data-theme="light"] .card h3 i{background:linear-gradient(135deg,#4f46e5,#06b6d4);color:#fff}
+:root[data-theme="light"] .ph h2{color:#312e81}
+:root[data-theme="light"] .kpi{background:linear-gradient(135deg,color-mix(in srgb,var(--c,var(--ac)) 14%,#fff),#fff 72%)}
+:root[data-theme="light"] .chip{background:linear-gradient(135deg,color-mix(in srgb,var(--c,var(--ac)) 10%,#fff),#fff)}
+:root[data-theme="light"] .banner{background:linear-gradient(120deg,color-mix(in srgb,var(--lv,var(--mu)) 24%,#fff),#fff 85%);color:var(--tx)}
+:root[data-theme="light"] .lvl{color:#312e81}
+:root[data-theme="light"] th{background:#eef2ff;color:#4338ca;font-weight:600}
+:root[data-theme="light"] tr:hover td{background:rgba(79,70,229,.05)}
+:root[data-theme="light"] input,:root[data-theme="light"] select,:root[data-theme="light"] textarea{background:#f5f7ff}
+:root[data-theme="light"] button{background:#fff;box-shadow:0 1px 3px rgba(22,33,62,.08)}
+:root[data-theme="light"] button.pri{background:linear-gradient(135deg,#4f46e5,#06b6d4);box-shadow:0 4px 14px rgba(79,70,229,.35)}
+:root[data-theme="light"] .pill{background:#fff}
+:root[data-theme="light"] .foot{background:rgba(255,255,255,.92)}
+:root[data-theme="light"] .tabs button.on{background:linear-gradient(135deg,#4f46e5,#06b6d4);color:#fff;border-color:transparent}
+:root[data-theme="light"] #map{box-shadow:0 0 0 3px rgba(79,70,229,.12)}
 *{box-sizing:border-box;margin:0}
 body{font-family:'Prompt',system-ui,sans-serif;color:var(--tx);min-height:100vh;background:radial-gradient(1100px 560px at 15% -10%,color-mix(in srgb,var(--ac) 20%,transparent),transparent 60%),radial-gradient(900px 500px at 100% 0,color-mix(in srgb,var(--ac2) 18%,transparent),transparent 60%),var(--bg);background-attachment:fixed}
 .mono{font-family:'JetBrains Mono',monospace}
 button{font:inherit;cursor:pointer;color:var(--tx);border:1px solid var(--cb);background:var(--card);padding:7px 13px;border-radius:10px;transition:.2s}
 button:hover:not(:disabled){border-color:var(--ac);transform:translateY(-1px)}
 button:disabled{opacity:.4;cursor:not-allowed}
-button.pri{background:linear-gradient(135deg,var(--ac),var(--ac2));border:0;color:#04122b;font-weight:600}
+button.pri{background:linear-gradient(135deg,var(--ac),var(--ac2));border:0;color:var(--pri-tx);font-weight:600}
 button.dng{border-color:var(--red);color:var(--red)}
 button.sm{padding:3px 8px;font-size:.78rem}
 header{position:sticky;top:0;z-index:60;display:flex;gap:12px;align-items:center;padding:9px 18px;backdrop-filter:blur(16px);background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--cb)}
@@ -34,7 +59,7 @@ nav h4{font-size:.68rem;letter-spacing:.8px;color:var(--mu);margin:16px 10px 6px
 nav a{display:flex;gap:9px;align-items:center;padding:8px 10px;border-radius:10px;color:var(--tx);text-decoration:none;font-size:.82rem;line-height:1.25;cursor:pointer;border:1px solid transparent}
 nav a:hover{background:rgba(120,170,255,.09)}
 nav a.on{background:color-mix(in srgb,var(--ac) 18%,transparent);border-color:color-mix(in srgb,var(--ac) 45%,transparent);font-weight:600}
-nav a b{flex:none;width:23px;height:23px;border-radius:7px;display:grid;place-items:center;font-size:.72rem;background:var(--ac);color:#04122b}
+nav a b{flex:none;width:23px;height:23px;border-radius:7px;display:grid;place-items:center;font-size:.72rem;background:var(--ac);color:var(--pri-tx)}
 nav a i{font-style:normal;margin-left:auto;font-size:.68rem;color:var(--mu)}
 main{padding:18px 20px 70px;min-width:0}
 .ph{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;flex-wrap:wrap}
@@ -73,7 +98,7 @@ td.act{white-space:nowrap;position:sticky;right:0;background:color-mix(in srgb,v
 .al{padding:9px 12px;border-radius:10px;border-left:4px solid var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);font-size:.79rem}.al b{color:var(--c)}
 .bar{height:8px;border-radius:9px;background:var(--grid);overflow:hidden}.bar>b{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--ac),var(--ac2))}
 .bi{padding:10px 13px;border-radius:12px;border:1px solid var(--cb);background:rgba(120,170,255,.05);margin-bottom:8px}.bi .h{display:flex;gap:10px;align-items:center;font-size:.83rem;font-weight:500}
-.bi .no{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--ac);color:#04122b;font-weight:700;font-size:.75rem;flex:none}
+.bi .no{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--ac);color:var(--pri-tx);font-weight:700;font-size:.75rem;flex:none}
 .empty{padding:34px 16px;text-align:center;color:var(--mu);font-size:.85rem;line-height:1.7;white-space:normal}
 .notice{padding:11px 15px;border-radius:12px;margin-bottom:14px;font-size:.8rem;border:1px solid rgba(250,204,21,.4);background:rgba(250,204,21,.09)}
 .notice.ok{background:rgba(34,197,94,.09);border-color:rgba(34,197,94,.4)}
@@ -88,7 +113,7 @@ td.act{white-space:nowrap;position:sticky;right:0;background:color-mix(in srgb,v
 .md.wide{width:min(980px,100%)}
 .mh{padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--cb);font-weight:600}
 .mb{padding:16px 18px;overflow:auto;flex:1}.mf{padding:12px 18px;border-top:1px solid var(--cb);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}.tabs button.on{background:var(--ac);color:#04122b;border-color:var(--ac)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}.tabs button.on{background:var(--ac);color:var(--pri-tx);border-color:var(--ac)}
 label{display:block;font-size:.75rem;color:var(--mu);margin:9px 0 3px}label small{opacity:.55}
 input,select,textarea{width:100%;font:inherit;font-size:.84rem;color:var(--tx);background:rgba(120,170,255,.08);border:1px solid var(--cb);border-radius:9px;padding:8px 10px;outline:0}
 input:focus,select:focus,textarea:focus{border-color:var(--ac)}option{color:#111}
@@ -100,7 +125,7 @@ pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.
 .ts{padding:10px 16px;border-radius:12px;background:var(--bg2);border:1px solid var(--ac);box-shadow:var(--sh);font-size:.82rem;animation:in .3s;max-width:380px}.ts.er{border-color:var(--red)}
 @keyframes in{from{transform:translateX(40px);opacity:0}}
 .foot{position:fixed;bottom:0;left:0;right:0;z-index:50;display:flex;gap:20px;justify-content:center;flex-wrap:wrap;padding:6px 14px;font-size:.72rem;color:var(--mu);backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 86%,transparent);border-top:1px solid var(--cb)}
-.step{display:flex;gap:10px;align-items:flex-start;margin:7px 0;font-size:.82rem}.step b{flex:none;width:22px;height:22px;border-radius:50%;background:var(--ac);color:#04122b;display:grid;place-items:center;font-size:.72rem}
+.step{display:flex;gap:10px;align-items:flex-start;margin:7px 0;font-size:.82rem}.step b{flex:none;width:22px;height:22px;border-radius:50%;background:var(--ac);color:var(--pri-tx);display:grid;place-items:center;font-size:.72rem}
 @media print{header,nav,.foot,button{display:none}.layout{display:block}}
 </style>
 </head>
@@ -177,7 +202,7 @@ pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.
  <fieldset><legend>🔄 การอัปเดต</legend><label>ความถี่ดึงข้อมูลอัตโนมัติ (Real-time)</label><select id="sInt"><option value="0">ปิด</option><option value="5">ทุก 5 วินาที</option><option value="10">ทุก 10 วินาที</option><option value="15">ทุก 15 วินาที</option><option value="30">ทุก 30 วินาที</option><option value="60">ทุก 1 นาที</option><option value="300">ทุก 5 นาที</option></select></fieldset>
  <fieldset><legend>🚨 เกณฑ์แจ้งเตือน</legend><div class="r2"><div><label>ฝน 24 ชม. เกิน (มม.)</label><input id="sR24" type="number"></div><div><label>ฝน 72 ชม. เกิน (มม.)</label><input id="sR72" type="number"></div><div><label>Autonomy ต่ำกว่า (ชม.)</label><input id="sAut" type="number"></div><div><label>ความคืบหน้า BCP ต่ำกว่า (%)</label><input id="sBcp" type="number"></div></div>
   <div class="sw"><input type="checkbox" id="sSnd"><span>เสียงเตือนเมื่อมีแจ้งเตือนวิกฤตใหม่</span></div></fieldset>
- <fieldset><legend>🎨 การแสดงผล</legend><label>หัวเรื่อง</label><input id="sTitle"><div class="r2"><div><label>ธีม</label><select id="sTheme"><option value="dark">มืด (EOC)</option><option value="light">สว่าง (เอกสารราชการ)</option></select></div><div><label>สีหลัก</label><input id="sAcc" type="color" style="height:38px;padding:2px"></div></div><label>ศูนย์กลางแผนที่ (lat,lng)</label><input id="sMap"></fieldset>
+ <fieldset><legend>🎨 การแสดงผล</legend><label>หัวเรื่อง</label><input id="sTitle"><div class="r2"><div><label>ธีม</label><select id="sTheme"><option value="light">สว่างสดใส (นักศึกษา/นักวิชาการ)</option><option value="dark">มืด (ห้อง EOC)</option></select></div><div><label>สีหลัก</label><input id="sAcc" type="color" style="height:38px;padding:2px"></div></div><label>ศูนย์กลางแผนที่ (lat,lng)</label><input id="sMap"></fieldset>
  <fieldset><legend>💾 การตั้งค่า</legend><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="sExp">ส่งออก JSON</button><button id="sImpB">นำเข้า JSON</button><button class="dng" id="sRst">รีเซ็ต</button><input type="file" id="sImp" accept=".json" hidden></div></fieldset>
  </div><div class="mf"><button data-x="ovSet">ยกเลิก</button><button class="pri" id="sSave">บันทึก</button></div></div></div>
 
@@ -224,9 +249,9 @@ const schemaVer=()=>{const t=JSON.stringify(Object.keys(SCHEMA).map(k=>[k,SCHEMA
 /* SCHEMA_DEF_END */
 
 /* ============ ตั้งค่า / สถานะ ============ */
-const DEF={sheet:'',script:'',token:'',interval:15,r24:150,r72:300,aut:36,bcp:60,sound:false,title:'ศูนย์ปฏิบัติการฉุกเฉิน (EOC) · BCP ด้านการแพทย์และสาธารณสุข สสจ.นราธิวาส ปี 2570',theme:'dark',acc:'#38bdf8',map:'6.25,101.85'};
+const DEF={sheet:'',script:'',token:'',interval:15,r24:150,r72:300,aut:36,bcp:60,sound:false,title:'ศูนย์ปฏิบัติการฉุกเฉิน (EOC) · BCP ด้านการแพทย์และสาธารณสุข สสจ.นราธิวาส ปี 2570',theme:'light',acc:'',map:'6.25,101.85',v:3};
 const LS='bcpnara.eoc.v2';
-let S=(()=>{try{return {...DEF,...JSON.parse(localStorage.getItem(LS)||'{}')}}catch(e){return {...DEF}}})();
+let S=(()=>{try{const o=JSON.parse(localStorage.getItem(LS)||'{}');if((o.v||0)<3){o.theme='light';o.acc='';o.v=3}return {...DEF,...o}}catch(e){return {...DEF}}})();
 const save=()=>{try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}};
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
@@ -437,7 +462,7 @@ const SUM={
  <div class="hint" style="margin-top:8px">เปิด/ปิดชั้นข้อมูลที่ปุ่มชั้นข้อมูลบนแผนที่ · ข้อมูล ปภ. และหน่วยงานอื่น เพิ่มได้ที่แท็บ GeoLayers ด้านล่าง (ArcGIS / WMS / XYZ / GeoJSON)</div>
  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${GEO_LINKS.map(l=>`<a href="${l[1]}" target="_blank" rel="noopener"><button class="sm">↗ ${esc(l[0])}</button></a>`).join('')}</div></div></div>
  <div class="card"><h3>ฝนสะสมรายอำเภอ (ข้อมูลล่าสุด)</h3><div class="cb"><canvas id="c1"></canvas></div></div>`},
- s2(){const m=countBy(D('Districts'),r=>r.level);return `<div class="chips">${LVL.map(l=>chip(l,m[l]||0,{แดง:'var(--red)',ส้ม:'var(--org)',เหลือง:'var(--yel)',เขียว:'var(--grn)'}[l])).join('')}</div>`},
+ s2(){const m=countBy(D('Districts'),r=>r.level),est=DIST.filter(n=>!D('Districts').some(d=>d.district===n&&d.level)&&assess(n)).length;return `<div class="chips">${LVL.map(l=>chip(l,m[l]||0,{แดง:'var(--red)',ส้ม:'var(--org)',เหลือง:'var(--yel)',เขียว:'var(--grn)'}[l])).join('')}${chip('ประเมินอัตโนมัติ (ยังไม่มีในชีต)',est,'var(--ac)')}${chip('รวมอำเภอ',DIST.length)}</div><div class="hint" style="margin:-6px 0 12px">สีของแต่ละอำเภอแบ่งตามระดับความเสี่ยงในแท็บ Districts ของ Sheet (เขียว/เหลือง/ส้ม/แดง) · อำเภอที่ยังไม่มีในชีตจะแสดงสีจากการประเมินอัตโนมัติเป็นเส้นประ</div>`},
  s3(){return s3Card()+`<div class="card"><h3>ระดับผลกระทบคาดการณ์รายอำเภอ (ตามที่บันทึกในชีต)</h3><div class="cb" style="height:300px"><canvas id="c3"></canvas></div></div>`},
  s4(){const m=countBy(D('Roads'),r=>r.status);return `<div class="chips">${chip('เส้นทางทั้งหมด',D('Roads').length)}${chip('ผ่านได้',m['ผ่านได้']||0,'var(--grn)')}${chip('เสี่ยง',m['เสี่ยง']||0,'var(--yel)')}${chip('ตัดขาด',m['ตัดขาด']||0,'var(--red)')}${chip('เส้นทางสำรองที่ผ่านได้',D('Roads').filter(r=>/สำรอง/.test(r.type)&&r.status==='ผ่านได้').length,'var(--ac)')}</div><div class="card" style="max-width:520px"><h3>สถานะเส้นทาง</h3><div class="cb"><canvas id="c4"></canvas></div></div>`},
  s5(){const V=D('Vulnerable'),m=countBy(V,r=>r.evac_status||'รอดำเนินการ');return `<div class="chips">${chip('ในทะเบียน',fmt(V.length))}${chip('อพยพลำดับ 1',V.filter(v=>v.evac_priority==='1').length,'var(--red)')}${chip('รอดำเนินการ',m['รอดำเนินการ']||0,'var(--yel)')}${chip('อพยพแล้ว',m['อพยพแล้ว']||0,'var(--grn)')}${chip('ไม่มีเบอร์ติดต่อ',V.filter(v=>!v.phone).length,'var(--org)')}</div><div class="card"><h3>จำนวนตามกลุ่มผู้ป่วย</h3><div class="cb"><canvas id="c5"></canvas></div></div>`},
@@ -526,6 +551,7 @@ async function delRow(k,id){
 }
 
 /* ============ แผนที่ ============ */
+const LVLCOL={'เขียว':'#22c55e','เหลือง':'#facc15','ส้ม':'#f97316','แดง':'#ef4444'};
 const GREEN=['#dcfce7','#86efac','#34d399','#15803d','#052e16'],RISKPAL=['#22c55e','#a3e635','#facc15','#f97316','#ef4444'],RISKLBL=['ปกติ','เฝ้าระวัง','ปานกลาง','สูง','วิกฤต'];
 const sevNum=v=>({'เสี่ยงสูง':4,'น้ำเพิ่ม':3,'ท่วมขัง':2,'เฝ้าระวัง':1,'ปกติ':0}[v]??0);
 const METRICS={risk:['ระดับความเสี่ยง',d=>({'แดง':4,'ส้ม':3,'เหลือง':2,'เขียว':0}[d.level]??0),4],h6:['ผลกระทบ 6 ชม.',d=>sevNum(d.h6),4],h12:['ผลกระทบ 12 ชม.',d=>sevNum(d.h12),4],h24:['ผลกระทบ 24 ชม.',d=>sevNum(d.h24),4],
@@ -711,13 +737,17 @@ function paintMap(){
   if(!map||!GEO)return;const [title,fn,fx]=METRICS[mapMetric],PL=mapPal==='risk'?RISKPAL:GREEN;
   const by={};D('Districts').forEach(d=>by[d.district]=d);
   const rowFor=nm=>by[nm]||(['gexp','fc24','sug'].includes(mapMetric)?{district:nm}:null);
+  const levelMode=(mapMetric==='risk'||mapMetric==='sug')&&mapPal==='risk';
+  const lvOf=nm=>{const c=by[nm];if(mapMetric==='risk'&&c&&c.level)return {level:c.level,est:false};const a=assess(nm);return a?{level:a.level,est:mapMetric!=='sug'||!c,reasons:a.reasons}:null};
   const vals=GEO.features.map(f=>rowFor(f.properties.name)?fn(rowFor(f.properties.name)):0),max=fx||Math.max(1,...vals),cls=v=>Math.max(0,Math.min(4,Math.floor(v/max*5-1e-9)));
   ['dist','lab','fac','sh'].forEach(k=>mapL[k].clearLayers());
   GEO.features.forEach((f,i)=>{const d=rowFor(f.properties.name),v=vals[i];
-    const l=L.geoJSON(f,{style:{fillColor:d?PL[cls(v)]:'#64748b',fillOpacity:d?.78:.2,color:'#fff',weight:1.6},onEachFeature:(_,ly)=>{
-      ly.bindPopup(d?`<b>อ.${esc(d.district)}</b> <small>(${esc(f.properties.name_en)})</small><br>ระดับ: ${esc(d.level)} ${esc(d.trend||'')}<br>6/12/24 ชม.: ${esc(d.h6||'-')} · ${esc(d.h12||'-')} · ${esc(d.h24||'-')}<br>กลุ่มเปราะบางในทะเบียน: ${D('Vulnerable').filter(x=>x.district===d.district).length} ราย${EXPO[d.district]?'<br>น้ำท่วมซ้ำซาก (GISTDA): '+EXPO[d.district].pct.toFixed(1)+'% ≈ '+EXPO[d.district].km2.toFixed(0)+' ตร.กม.':''}`:`<b>อ.${esc(f.properties.name)}</b><br>ไม่มีข้อมูลในแท็บ Districts`);
-      ly.on({mouseover:e=>e.target.setStyle({weight:3,color:'#facc15'}),mouseout:e=>e.target.setStyle({weight:1.6,color:'#fff'})})}}).addTo(mapL.dist);
-    const vt=d?(mapMetric==='vul'?v+' ราย':mapMetric==='gexp'?v.toFixed(1)+'%':mapMetric==='fc24'?v.toFixed(0)+' มม.':mapMetric==='sug'?(assess(d.district)?.level||'-'):mapMetric==='rain'?v+' มม.':mapMetric==='risk'?d.level+' '+(d.trend||''):['ปกติ','เฝ้าระวัง','ท่วมขัง','น้ำเพิ่ม','เสี่ยงสูง'][v]):'ไม่มีข้อมูล';
+    const lv=levelMode?lvOf(f.properties.name):null;
+    const sty=levelMode?{fillColor:lv?LVLCOL[lv.level]:'#94a3b8',fillOpacity:lv?(lv.est?.6:.82):.25,color:'#fff',weight:lv&&lv.est?2.4:1.8,dashArray:lv&&lv.est?'7 5':null}:{fillColor:d?PL[cls(v)]:'#64748b',fillOpacity:d?.78:.2,color:'#fff',weight:1.6};
+    const l=L.geoJSON(f,{style:sty,onEachFeature:(_,ly)=>{
+      ly.bindPopup(lv&&lv.est&&!(by[f.properties.name]&&by[f.properties.name].level)?`<b>อ.${esc(f.properties.name)}</b><br>ระดับประเมินอัตโนมัติ: <b>${esc(lv.level)}</b> <small>(ยังไม่มีในชีต)</small><br><small>${esc((lv.reasons||[]).join(' · '))}</small>`:d?`<b>อ.${esc(d.district)}</b> <small>(${esc(f.properties.name_en)})</small><br>ระดับ: ${esc(d.level)} ${esc(d.trend||'')}<br>6/12/24 ชม.: ${esc(d.h6||'-')} · ${esc(d.h12||'-')} · ${esc(d.h24||'-')}<br>กลุ่มเปราะบางในทะเบียน: ${D('Vulnerable').filter(x=>x.district===d.district).length} ราย${EXPO[d.district]?'<br>น้ำท่วมซ้ำซาก (GISTDA): '+EXPO[d.district].pct.toFixed(1)+'% ≈ '+EXPO[d.district].km2.toFixed(0)+' ตร.กม.':''}`:`<b>อ.${esc(f.properties.name)}</b><br>ไม่มีข้อมูลในแท็บ Districts`);
+      ly.on({mouseover:e=>e.target.setStyle({weight:3.5,color:'#1e1b4b'}),mouseout:e=>e.target.setStyle({weight:sty.weight,color:'#fff'})})}}).addTo(mapL.dist);
+    const vt=(d||lv)?(mapMetric==='vul'?v+' ราย':mapMetric==='gexp'?v.toFixed(1)+'%':mapMetric==='fc24'?v.toFixed(0)+' มม.':mapMetric==='sug'?(assess(d.district)?.level||'-'):mapMetric==='rain'?v+' มม.':mapMetric==='risk'?(lv?lv.level+' '+(by[f.properties.name]&&by[f.properties.name].trend||'')+(lv.est?' (ประเมิน)':''):d.level+' '+(d.trend||'')):['ปกติ','เฝ้าระวัง','ท่วมขัง','น้ำเพิ่ม','เสี่ยงสูง'][v]):'ไม่มีข้อมูล';
     L.marker(l.getBounds().getCenter(),{interactive:false,icon:L.divIcon({className:'',iconSize:[0,0],html:`<div class="dlab"><b>${esc(f.properties.name)}</b><span>${esc(vt)}</span></div>`})}).addTo(mapL.lab)});
   const hosp=D('Hospitals'),norm=s=>String(s).replace(/โรงพยาบาล|รพ\.|\(.*?\)|\s|[​-]/g,'');
   const mk=(la,ln,t,bc,html)=>L.marker([la,ln],{icon:L.divIcon({className:'',iconSize:[22,22],html:`<div style="width:22px;height:22px;border-radius:6px;background:#fff;color:#0b5ed7;border:2px solid ${bc};display:grid;place-items:center;font:700 12px Prompt;box-shadow:0 2px 6px rgba(0,0,0,.5)">${t}</div>`})}).bindPopup(html);
@@ -725,6 +755,10 @@ function paintMap(){
     mk(p.lat,p.lng,p.type==='hospital'?'H':p.type==='rph'?'+':'c',h&&h.level==='แดง'?'#ef4444':'#0b5ed7',`<b>${esc(p.name)}</b><br>อ.${esc(p.district)}${h?`<br>สถานะ: ${esc(h.level)} · Autonomy ${esc(h.autonomy_hr||'-')} ชม.`:''}<br><small>OSM ${esc(p.id)}</small>`).bindTooltip(esc(p.name),{permanent:true,direction:'right',offset:[10,0],className:'flab',opacity:1}).addTo(mapL.fac)});
   hosp.filter(h=>has(h.lat)&&has(h.lng)).forEach(h=>mk(num(h.lat),num(h.lng),'H',{แดง:'#ef4444',ส้ม:'#f97316',เหลือง:'#facc15',เขียว:'#22c55e'}[h.level]||'#0b5ed7',`<b>รพ.${esc(h.name)}</b><br>ระดับ: ${esc(h.level)} · Autonomy ${esc(h.autonomy_hr||'-')} ชม.`).addTo(mapL.sh));
   D('RPH').filter(h=>has(h.lat)&&has(h.lng)).forEach(h=>mk(num(h.lat),num(h.lng),'+',{ปกติ:'#22c55e',เฝ้าระวัง:'#facc15',เสี่ยง:'#f97316',ปิดให้บริการ:'#ef4444'}[h.status]||'#0b5ed7',`<b>${esc(h.name)}</b><br>${esc(h.status)}`).addTo(mapL.sh));
+  if(levelMode){
+    $('#lg').innerHTML=`<b>${mapMetric==='sug'?'ระดับแนะนำจากการประเมิน':'ระดับความเสี่ยงรายอำเภอ'}</b><div style="margin:6px 0;display:grid;gap:3px">${[['เขียว','ปกติ'],['เหลือง','เฝ้าระวัง'],['ส้ม','เสี่ยง'],['แดง','วิกฤต']].map(([k,t])=>`<div style="display:flex;align-items:center;gap:7px"><span style="width:22px;height:11px;border-radius:3px;background:${LVLCOL[k]};border:1px solid #fff"></span>${k} · ${t}</div>`).join('')}<div style="display:flex;align-items:center;gap:7px"><span style="width:22px;height:11px;border-radius:3px;background:#94a3b8;opacity:.5;border:1px solid #fff"></span>ไม่มีข้อมูล</div></div><div style="opacity:.85">เส้นประ = ค่าประเมินอัตโนมัติ (ยังไม่มีในชีต)</div><div style="margin-top:4px">H รพ. · + รพ.สต. · c คลินิก</div>`;
+    return;
+  }
   const steps=mapPal==='risk'?RISKLBL:['น้อย','','','','มาก'];
   $('#lg').innerHTML=`<b>${esc(title)}</b><div style="display:flex;margin:5px 0 2px">${PL.map(c=>`<span style="flex:1;height:10px;background:${c}"></span>`).join('')}</div><div style="display:flex;justify-content:space-between;gap:10px">${steps.map(t=>`<span>${t}</span>`).join('')}</div><div style="margin-top:4px">H รพ. · + รพ.สต. · c คลินิก</div>`;
 }
@@ -760,8 +794,9 @@ async function sharing(mode){
   if(mode==='EDIT'&&!confirm('⚠ เปิดสิทธิ์ "ผู้มีลิงก์แก้ไขได้" — ใครก็ตามที่มีลิงก์จะแก้/ลบข้อมูลทั้ง Sheet ได้ รวมข้อมูลส่วนบุคคลของกลุ่มเปราะบาง\n\nยืนยัน?'))return;
   try{const j=await http('POST','setSharing',{mode});toast('✓ '+j.message)}catch(e){toast(e.message,1)}
 }
-function fillSet(){$('#sInt').value=S.interval;$('#sR24').value=S.r24;$('#sR72').value=S.r72;$('#sAut').value=S.aut;$('#sBcp').value=S.bcp;$('#sSnd').checked=S.sound;$('#sTitle').value=S.title;$('#sTheme').value=S.theme;$('#sAcc').value=S.acc;$('#sMap').value=S.map}
-function look(){document.documentElement.dataset.theme=S.theme;document.documentElement.style.setProperty('--ac',S.acc);$('#orgTitle').textContent=S.title;document.title='EOC BCP · สสจ.นราธิวาส 2570'}
+function fillSet(){$('#sInt').value=S.interval;$('#sR24').value=S.r24;$('#sR72').value=S.r72;$('#sAut').value=S.aut;$('#sBcp').value=S.bcp;$('#sSnd').checked=S.sound;$('#sTitle').value=S.title;$('#sTheme').value=S.theme;$('#sAcc').value=customAcc()?S.acc:(S.theme==='light'?'#4f46e5':'#38bdf8');$('#sMap').value=S.map}
+const customAcc=()=>S.acc&&!['#38bdf8','#4f46e5'].includes(String(S.acc).toLowerCase());
+function look(){document.documentElement.dataset.theme=S.theme;customAcc()?document.documentElement.style.setProperty('--ac',S.acc):document.documentElement.style.removeProperty('--ac');$('#orgTitle').textContent=S.title;document.title='EOC BCP · สสจ.นราธิวาส 2570'}
 let timer;const sched=()=>{clearInterval(timer);$('#hInt').value=String(S.interval);if(+S.interval>0){nextSync=Date.now()+S.interval*1000;timer=setInterval(()=>{nextSync=Date.now()+S.interval*1000;pull()},S.interval*1000)}else nextSync=0};
 
 /* ============ Events ============ */
