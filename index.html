@@ -349,6 +349,9 @@ function alerts(){
   const A=[],X=derive(),add=(c,t,d)=>A.push([c,t,d]);
   if(X.r24!=null&&X.r24>S.r24)add('red','ฝนสะสม 24 ชม. เกินเกณฑ์',`สูงสุด ${X.r24} มม. > ${S.r24} มม. (${X.rfDate})`);
   if(X.r72!=null&&X.r72>S.r72)add('org','ฝนสะสม 72 ชม. เกินเกณฑ์',`สูงสุด ${X.r72} มม. > ${S.r72} มม.`);
+  if(XS.fc==='done')(GEO?GEO.features.map(f=>f.properties.name):[]).forEach(nm=>{const a=assess(nm),cur=D('Districts').find(d=>d.district===nm);if(!a)return;
+    if(cur&&lvlScore(a.level)>lvlScore(cur.level))add('org','อ.'+nm+' ประเมินแนะนำ '+a.level+' สูงกว่าในชีต ('+cur.level+')',a.reasons.join(' · '));
+    else if(!cur&&a.lvl>=2)add('yel','อ.'+nm+' ประเมินแนะนำ '+a.level+' (ยังไม่มีระดับในชีต)',a.reasons.join(' · '))});
   D('Districts').filter(d=>d.level==='แดง').forEach(d=>add('red','อ.'+d.district+' ระดับแดง','แนวโน้ม '+(d.trend||'-')+' · 24 ชม.: '+(d.h24||'-')));
   D('Hospitals').forEach(h=>{
     if(has(h.autonomy_hr)&&num(h.autonomy_hr)<S.aut)add('org','รพ.'+h.name+' Autonomy ต่ำ',h.autonomy_hr+' ชม. < '+S.aut);
@@ -372,7 +375,7 @@ const PAGES=[
  {g:'สถานการณ์และความเสี่ยง'},
  {id:'s1',n:1,t:'พื้นที่เสี่ยงจากอุทกภัย (บูรณาการข้อมูลภูมิสารสนเทศ GISTDA / ปภ.)',tabs:['Config','Rainfall','GeoLayers'],map:1,d:'BCP ข้อ 1 — ประยุกต์ใช้ฐานข้อมูลแผนที่พื้นที่เสี่ยงภัยจาก GISTDA และ ปภ. เพื่อประกอบการตัดสินใจและประเมินสถานการณ์: ซ้อนทับชั้นข้อมูลน้ำท่วมซ้ำซากบนแผนที่ คำนวณสัดส่วนพื้นที่เสี่ยงรายอำเภอ และเพิ่มชั้นข้อมูลของหน่วยงานอื่นได้ที่แท็บ GeoLayers'},
  {id:'s2',n:2,t:'แผนที่สถานการณ์และความเสี่ยงรายอำเภอ',tabs:['Districts'],map:1,d:'ขอบเขตอำเภอจาก geoBoundaries + OpenGISData-Thailand · พิกัดหน่วยบริการจาก OSM · ภาพดาวเทียม Esri'},
- {id:'s3',n:3,t:'ระดับความเสี่ยงและคาดการณ์ผลกระทบ',tabs:['Districts'],ro:['district','level','trend','h6','h12','h24'],d:'คาดการณ์ผลกระทบ 6 / 12 / 24 ชั่วโมง — แก้ไขข้อมูลได้ที่หัวข้อที่ 2'},
+ {id:'s3',n:3,t:'ระดับความเสี่ยงและคาดการณ์ผลกระทบ (GISTDA + ปภ.)',tabs:['Districts'],ro:['district','level','trend','h6','h12','h24'],d:'ประเมินระดับความเสี่ยงและผลกระทบ 6 / 12 / 24 ชั่วโมงรายอำเภอ จากข้อมูล GISTDA (สถานีวัดระดับน้ำ, น้ำท่วมซ้ำซาก), ปภ. (ข้อมูลเปิด) และพยากรณ์ฝน — แสดงเทียบกับระดับที่บันทึกในชีต และบันทึกค่าแนะนำลงชีตได้เมื่อผู้มีสิทธิ์ยืนยัน'},
  {g:'ดูแลประชาชน & บัญชาการ'},
  {id:'s4',n:4,t:'เส้นทางคมนาคมและการเข้าถึง',tabs:['Roads'],d:'ประวัติเส้นทางถูกตัดขาดย้อนหลัง 3 ปี และเส้นทางสำรอง (Bypass Routes) สำหรับการลงพื้นที่และส่งต่อผู้ป่วย (BCP ข้อ 2)'},
  {id:'s5',n:5,t:'กลุ่มเปราะบางและการอพยพลำดับแรก',tabs:['Vulnerable'],d:'ทะเบียนกลุ่มเปราะบางที่ต้องอพยพก่อน พร้อมชื่อ ที่อยู่ และเบอร์โทรที่ติดต่อได้จริง (BCP ข้อ 6) — ข้อมูลส่วนบุคคลถูกปิดบังสำหรับผู้ไม่มีสิทธิ์'},
@@ -435,7 +438,7 @@ const SUM={
  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${GEO_LINKS.map(l=>`<a href="${l[1]}" target="_blank" rel="noopener"><button class="sm">↗ ${esc(l[0])}</button></a>`).join('')}</div></div></div>
  <div class="card"><h3>ฝนสะสมรายอำเภอ (ข้อมูลล่าสุด)</h3><div class="cb"><canvas id="c1"></canvas></div></div>`},
  s2(){const m=countBy(D('Districts'),r=>r.level);return `<div class="chips">${LVL.map(l=>chip(l,m[l]||0,{แดง:'var(--red)',ส้ม:'var(--org)',เหลือง:'var(--yel)',เขียว:'var(--grn)'}[l])).join('')}</div>`},
- s3(){return `<div class="card"><h3>ระดับผลกระทบคาดการณ์รายอำเภอ</h3><div class="cb" style="height:300px"><canvas id="c3"></canvas></div></div>`},
+ s3(){return s3Card()+`<div class="card"><h3>ระดับผลกระทบคาดการณ์รายอำเภอ (ตามที่บันทึกในชีต)</h3><div class="cb" style="height:300px"><canvas id="c3"></canvas></div></div>`},
  s4(){const m=countBy(D('Roads'),r=>r.status);return `<div class="chips">${chip('เส้นทางทั้งหมด',D('Roads').length)}${chip('ผ่านได้',m['ผ่านได้']||0,'var(--grn)')}${chip('เสี่ยง',m['เสี่ยง']||0,'var(--yel)')}${chip('ตัดขาด',m['ตัดขาด']||0,'var(--red)')}${chip('เส้นทางสำรองที่ผ่านได้',D('Roads').filter(r=>/สำรอง/.test(r.type)&&r.status==='ผ่านได้').length,'var(--ac)')}</div><div class="card" style="max-width:520px"><h3>สถานะเส้นทาง</h3><div class="cb"><canvas id="c4"></canvas></div></div>`},
  s5(){const V=D('Vulnerable'),m=countBy(V,r=>r.evac_status||'รอดำเนินการ');return `<div class="chips">${chip('ในทะเบียน',fmt(V.length))}${chip('อพยพลำดับ 1',V.filter(v=>v.evac_priority==='1').length,'var(--red)')}${chip('รอดำเนินการ',m['รอดำเนินการ']||0,'var(--yel)')}${chip('อพยพแล้ว',m['อพยพแล้ว']||0,'var(--grn)')}${chip('ไม่มีเบอร์ติดต่อ',V.filter(v=>!v.phone).length,'var(--org)')}</div><div class="card"><h3>จำนวนตามกลุ่มผู้ป่วย</h3><div class="cb"><canvas id="c5"></canvas></div></div>`},
  s6(){const E=D('EMS'),R=D('Referral'),m=countBy(R,r=>r.status);return `<div class="chips">${chip('หน่วย EMS',E.length)}${chip('ยานพาหนะพร้อม/ทั้งหมด',E.reduce((s,r)=>s+num(r.qty_ready),0)+' / '+E.reduce((s,r)=>s+num(r.qty_total),0),'var(--ac)')}${chip('เส้นทางส่งต่อพร้อม',m['พร้อม']||0,'var(--grn)')}${chip('เสี่ยง',m['เสี่ยง']||0,'var(--yel)')}${chip('ใช้ไม่ได้',m['ใช้ไม่ได้']||0,'var(--red)')}</div>`},
@@ -449,7 +452,7 @@ const SUM={
 function afterPage(p){
   const f={
    s1(){drawExposure();$('#expoBtn')?.addEventListener('click',()=>computeExposure(true));const X=derive(),r=D('Rainfall').filter(r=>r.as_of===X.rfDate);chart('c1','bar',r.map(x=>x.district),[{label:'24 ชม.',data:r.map(x=>num(x.rain24)),backgroundColor:'#38bdf8',borderRadius:4},{label:'72 ชม.',data:r.map(x=>num(x.rain72)),backgroundColor:'#818cf8',borderRadius:4}])},
-   s3(){const rows=D('Districts'),sv=v=>SEV.length-1-SEV.indexOf(v);chart('c3','bar',rows.map(d=>d.district),[['h6','6 ชม.','#38bdf8'],['h12','12 ชม.','#818cf8'],['h24','24 ชม.','#ec4899']].map(([k,l,c])=>({label:l,data:rows.map(d=>d[k]?sv(d[k]):0),backgroundColor:c,borderRadius:4})),{ys:{max:4},yt:{stepSize:1,callback:v=>SEV[SEV.length-1-v]}})},
+   s3(){$('#fcBtn')?.addEventListener('click',()=>{EXPO_ST='idle';loadExtra(true);computeExposure(true)});$('#sugAll')?.addEventListener('click',()=>applySug(GEO.features.map(f=>f.properties.name)));$$('[data-sug]').forEach(b=>b.addEventListener('click',()=>applySug([b.dataset.sug])));loadExtra();const rows=D('Districts'),sv=v=>SEV.length-1-SEV.indexOf(v);chart('c3','bar',rows.map(d=>d.district),[['h6','6 ชม.','#38bdf8'],['h12','12 ชม.','#818cf8'],['h24','24 ชม.','#ec4899']].map(([k,l,c])=>({label:l,data:rows.map(d=>d[k]?sv(d[k]):0),backgroundColor:c,borderRadius:4})),{ys:{max:4},yt:{stepSize:1,callback:v=>SEV[SEV.length-1-v]}})},
    s4(){const m=countBy(D('Roads'),r=>r.status);chart('c4','doughnut',Object.keys(m),[{data:Object.values(m),backgroundColor:Object.keys(m).map(k=>({ผ่านได้:'#22c55e',เสี่ยง:'#facc15',ตัดขาด:'#ef4444'}[k]||'#64748b')),borderWidth:0}])},
    s5(){const m=countBy(D('Vulnerable'),r=>r.group);chart('c5','bar',Object.keys(m),[{label:'ราย',data:Object.values(m),backgroundColor:'#38bdf8',borderRadius:6}],{axis:'y',legend:false})},
    s8(){const H=D('Hospitals');chart('c8','bar',H.map(h=>h.name),[{label:'Autonomy',data:H.map(h=>has(h.autonomy_hr)?num(h.autonomy_hr):0),backgroundColor:'#22c55e',borderRadius:4},{label:'RTO',data:H.map(h=>has(h.rto_hr)?num(h.rto_hr):0),backgroundColor:'#f97316',borderRadius:4}])},
@@ -526,9 +529,112 @@ async function delRow(k,id){
 const GREEN=['#dcfce7','#86efac','#34d399','#15803d','#052e16'],RISKPAL=['#22c55e','#a3e635','#facc15','#f97316','#ef4444'],RISKLBL=['ปกติ','เฝ้าระวัง','ปานกลาง','สูง','วิกฤต'];
 const sevNum=v=>({'เสี่ยงสูง':4,'น้ำเพิ่ม':3,'ท่วมขัง':2,'เฝ้าระวัง':1,'ปกติ':0}[v]??0);
 const METRICS={risk:['ระดับความเสี่ยง',d=>({'แดง':4,'ส้ม':3,'เหลือง':2,'เขียว':0}[d.level]??0),4],h6:['ผลกระทบ 6 ชม.',d=>sevNum(d.h6),4],h12:['ผลกระทบ 12 ชม.',d=>sevNum(d.h12),4],h24:['ผลกระทบ 24 ชม.',d=>sevNum(d.h24),4],
+ fc24:['ฝนพยากรณ์ 24 ชม. (มม.)',d=>FC[d.district]?.mm24||0,0],
+ sug:['ระดับแนะนำจากการประเมิน (GISTDA+ปภ.+ฝน)',d=>{const a=assess(d.district);return a?[0,2,3,4][a.lvl]:0},4],
  gexp:['น้ำท่วมซ้ำซาก GISTDA (% พื้นที่อำเภอ)',d=>EXPO[d.district]?.pct||0,0],
  vul:['กลุ่มเปราะบางในทะเบียน (ราย)',d=>D('Vulnerable').filter(v=>v.district===d.district).length,0],
  rain:['ฝนสะสม 24 ชม. (มม.)',d=>{const X=derive(),r=D('Rainfall').find(r=>r.district===d.district&&r.as_of===X.rfDate);return r?num(r.rain24):0},0]};
+/* ======== ระดับความเสี่ยงและคาดการณ์ผลกระทบ: GISTDA + ปภ. + พยากรณ์ฝน ======== */
+const GFL='https://gistdaportal.gistda.or.th/data/rest/services/GFlood/GFlood_Inno_WFS/MapServer';
+const DDPM_B='https://gistdaportal.gistda.or.th/data/rest/services/opendata/';
+const XS={fc:'idle',stn:'idle',ddpm:'idle',t:0};
+let FC={},FC_AT='',STN=[],DPROV=null,AOP={},AOP_ROWS=[];
+const SEVASC=['ปกติ','เฝ้าระวัง','ท่วมขัง','น้ำเพิ่ม','เสี่ยงสูง'],LVLNAME=['เขียว','เหลือง','ส้ม','แดง'];
+const RULES={lv:[35,90,150],sev:[10,35,60,90],expo:25,stnCls:4,stale:72};
+const fjson=async u=>{const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();if(j.error)throw new Error(j.error.message||'service error');return j};
+const centerOf=f=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;let a=[1e9,1e9,-1e9,-1e9];polys.forEach(p=>p[0].forEach(([x,y])=>{a=[Math.min(a[0],x),Math.min(a[1],y),Math.max(a[2],x),Math.max(a[3],y)]}));return [(a[1]+a[3])/2,(a[0]+a[2])/2]};
+async function loadForecast(){
+  XS.fc='run';
+  try{
+    const cs=GEO.features.map(centerOf);
+    const j=await fjson('https://api.open-meteo.com/v1/forecast?latitude='+cs.map(c=>c[0].toFixed(3)).join(',')+'&longitude='+cs.map(c=>c[1].toFixed(3)).join(',')+'&hourly=precipitation&forecast_hours=24&timezone=Asia%2FBangkok');
+    const arr=Array.isArray(j)?j:[j];FC={};
+    arr.forEach((r,i)=>{const p=r.hourly.precipitation.map(v=>v||0),sum=n=>p.slice(0,n).reduce((a,b)=>a+b,0);FC[GEO.features[i].properties.name]={mm6:sum(6),mm12:sum(12),mm24:sum(24),h:p};FC_AT=r.hourly.time[0]});
+    XS.fc='done';
+  }catch(e){XS.fc='err';console.warn(e)}
+}
+async function loadStations(){
+  XS.stn='run';
+  try{
+    const j=await fjson(GFL+'/0/query?'+new URLSearchParams({where:'1=1',outFields:'station_na,amphoe_nam,province_n,value,percentage,classify,datetime',returnGeometry:'true',outSR:'4326',f:'json'}));
+    STN=j.features.filter(f=>f.attributes.province_n==='นราธิวาส').map(f=>({name:f.attributes.station_na,district:f.attributes.amphoe_nam,value:f.attributes.value,pct:f.attributes.percentage,cls:+f.attributes.classify||0,t:f.attributes.datetime,lat:f.geometry&&f.geometry.y,lng:f.geometry&&f.geometry.x}));
+    XS.stn='done';
+  }catch(e){XS.stn='err';console.warn(e)}
+}
+async function loadDDPM(){
+  XS.ddpm='run';
+  try{
+    const q=(sv,o)=>fjson(DDPM_B+sv+'/MapServer/0/query?'+new URLSearchParams({where:'PROVINCE_I=96',outFields:'*',f:'json',outSR:'4326',...o}));
+    const [p,a]=await Promise.all([q('Disaster_Prevention_prov',{returnGeometry:'true'}),q('Civil_Defence_Voluntee',{returnGeometry:'false'})]);
+    DPROV=p.features[0]?{name:p.features[0].attributes.CENTER_NAM,lat:p.features[0].geometry.y,lng:p.features[0].geometry.x}:null;
+    AOP={};AOP_ROWS=a.features.map(f=>f.attributes).filter(r=>r.TYPE===4);AOP_ROWS.forEach(r=>AOP[r.AMPHUR_NAM]=(AOP[r.AMPHUR_NAM]||0)+(+r.VOLUNTEER_||0));
+    XS.ddpm='done';
+  }catch(e){XS.ddpm='err';console.warn(e)}
+}
+async function loadExtra(force){
+  if(XS.fc==='run'||XS.stn==='run'||XS.ddpm==='run')return;
+  if(!force&&XS.t&&Date.now()-XS.t<30*60e3)return;
+  await loadGeo();if(!GEO)return;
+  XS.t=Date.now();
+  await Promise.all([loadForecast(),loadStations(),loadDDPM()]);
+  if(route==='s3'||route==='overview')renderView();else{paintExtra();if(map)paintMap();renderFoot()}
+}
+const stnFresh=t=>t&&(Date.now()-t)/36e5<=RULES.stale;
+const stnOf=name=>STN.filter(x=>x.district===name);
+/* กฎการประเมิน (โปร่งใส ตรวจสอบได้): พยากรณ์ฝน 24 ชม. → ระดับพื้นฐาน, +1 ถ้าพื้นที่ท่วมซ้ำซากสูง, +1 ถ้าสถานีน้ำ GISTDA ล่าสุดอยู่ระดับ 4 */
+function assess(name){
+  const f=FC[name];if(!f)return null;const ex=EXPO[name]?.pct;const R=[];
+  let lv=f.mm24>=RULES.lv[2]?3:f.mm24>=RULES.lv[1]?2:f.mm24>=RULES.lv[0]?1:0;R.push('ฝนพยากรณ์ 24 ชม. '+f.mm24.toFixed(0)+' มม. → '+LVLNAME[lv]);
+  const hi=ex!=null&&ex>=RULES.expo;if(hi){lv=Math.min(3,lv+1);R.push('น้ำท่วมซ้ำซาก '+ex.toFixed(0)+'% (≥'+RULES.expo+'%) +1')}
+  const fresh=stnOf(name).filter(x=>stnFresh(x.t)&&x.cls>=RULES.stnCls);if(fresh.length){lv=Math.min(3,lv+1);R.push('สถานีน้ำ GISTDA ระดับ '+RULES.stnCls+' ('+fresh.map(x=>x.name).join(', ')+') +1')}
+  const sv=mm=>{let i=mm>=RULES.sev[3]?4:mm>=RULES.sev[2]?3:mm>=RULES.sev[1]?2:mm>=RULES.sev[0]?1:0;if(hi)i=Math.min(4,i+(mm>=RULES.sev[0]?1:0));return SEVASC[i]};
+  return {lvl:lv,level:LVLNAME[lv],h6:sv(f.mm6),h12:sv(f.mm12),h24:sv(f.mm24),reasons:R};
+}
+const lvlScore=l=>({'เขียว':0,'เหลือง':1,'ส้ม':2,'แดง':3}[l]??-1);
+const thDT=ms=>ms?new Date(ms).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—';
+function s3Card(){
+  const st=k=>({idle:'⚪ รอ',run:'⏳ กำลังโหลด',done:'✅ พร้อม',err:'❌ ขัดข้อง'}[XS[k]]);
+  const rows=GEO?GEO.features.map(f=>f.properties.name):[];
+  const body=rows.map(nm=>{
+    const f=FC[nm],a=assess(nm),cur=D('Districts').find(d=>d.district===nm),ex=EXPO[nm],ss=stnOf(nm).sort((x,y)=>y.pct-x.pct)[0];
+    const diff=a&&cur&&lvlScore(a.level)>lvlScore(cur.level);
+    return '<tr><td><b>'+esc(nm)+'</b></td><td class="mono">'+(f?f.mm6.toFixed(0)+' / '+f.mm12.toFixed(0)+' / '+f.mm24.toFixed(0):'—')+'</td><td class="mono">'+(ex?ex.pct.toFixed(1)+'%':'—')+'</td>'+
+     '<td title="'+(ss?esc(ss.name)+' · '+thDT(ss.t):'')+'">'+(ss?'<span class="mono">'+ss.pct.toFixed(0)+'%</span> ระดับ '+ss.cls+(stnFresh(ss.t)?'':' <small style="color:var(--org)">(ข้อมูล '+thDT(ss.t).split(' ')[0]+' · เก่า)</small>'):'<span style="opacity:.5">ไม่มีสถานี</span>')+'</td>'+
+     '<td class="mono">'+(AOP[nm]!=null?fmt(AOP[nm])+' คน':'—')+'</td><td>'+(cur?'<span class="tag '+tagCls(cur.level)+'">'+esc(cur.level)+'</span>':'<span style="opacity:.5">ไม่มีในชีต</span>')+'</td>'+
+     '<td>'+(a?'<span class="tag '+tagCls(a.level)+'" title="'+esc(a.reasons.join(' | '))+'">'+a.level+'</span>'+(diff?' <b style="color:var(--org)">▲</b>':''):'—')+'</td>'+
+     '<td style="font-size:.74rem">'+(a?[a.h6,a.h12,a.h24].map(v=>'<span class="tag '+tagCls(v)+'" style="min-width:0">'+v+'</span>').join(' '):'—')+'</td>'+
+     '<td>'+(a?'<button class="sm" data-w="edit" data-sug="'+esc(nm)+'" title="บันทึกค่าแนะนำลงชีต">ใช้ค่านี้</button>':'')+'</td></tr>'}).join('');
+  return '<div class="card"><h3>🧭 ประเมินระดับความเสี่ยงและคาดการณ์ผลกระทบ (GISTDA + ปภ. + พยากรณ์ฝน)<span class="tools"><button class="sm" id="fcBtn">⟳ โหลดข้อมูลใหม่</button><button class="sm pri" data-w="edit" id="sugAll">ใช้ค่าแนะนำทั้งหมด → Sheet</button></span></h3>'+
+   '<div class="chips"><div class="chip">พยากรณ์ฝน (Open-Meteo)<b style="font-size:.9rem">'+st('fc')+'</b>'+(FC_AT?'ตั้งแต่ '+FC_AT.replace('T',' ')+' น.':'')+'</div><div class="chip">GISTDA สถานีวัดระดับน้ำ<b style="font-size:.9rem">'+st('stn')+'</b>'+STN.length+' สถานีในนราธิวาส · ข้อมูล '+thDT(Math.max(0,...STN.map(x=>x.t)))+'</div><div class="chip">GISTDA น้ำท่วมซ้ำซาก<b style="font-size:.9rem">'+({idle:'⚪ รอ',run:'⏳ คำนวณ',done:'✅ พร้อม',err:'❌ ขัดข้อง'}[EXPO_ST])+'</b>จากภาพชั้นข้อมูล</div><div class="chip">ปภ. (ข้อมูลเปิด)<b style="font-size:.9rem">'+st('ddpm')+'</b>'+(DPROV?'ปภ.จ.'+esc(DPROV.name):'')+' · อปพร. '+fmt(Object.values(AOP).reduce((a,b)=>a+b,0))+' คน</div></div>'+
+   '<div class="tw"><table><tr><th>อำเภอ</th><th>ฝนพยากรณ์ 6/12/24 ชม. (มม.)</th><th>ท่วมซ้ำซาก (GISTDA)</th><th>สถานีน้ำ GISTDA (สูงสุด % ตลิ่ง)</th><th>อปพร. (ปภ.)</th><th>ระดับในชีต</th><th>ระดับแนะนำ</th><th>ผลกระทบแนะนำ 6/12/24 ชม.</th><th></th></tr>'+(body||'<tr><td colspan="9" class="empty">รอข้อมูลขอบเขตอำเภอ…</td></tr>')+'</table></div>'+
+   '<details style="margin-top:10px"><summary class="hint" style="cursor:pointer">📐 เกณฑ์การประเมิน (โปร่งใส — ใช้ประกอบการตัดสินใจ ไม่ใช่คำสั่งอัตโนมัติ)</summary><div class="hint" style="line-height:1.8">'+
+   '• <b>ระดับพื้นฐาน</b> จากฝนพยากรณ์สะสม 24 ชม.: &lt;'+RULES.lv[0]+' มม. = เขียว · '+RULES.lv[0]+'–'+RULES.lv[1]+' = เหลือง · '+RULES.lv[1]+'–'+RULES.lv[2]+' = ส้ม · ≥'+RULES.lv[2]+' = แดง<br>'+
+   '• <b>+1 ระดับ</b> ถ้าอำเภอเคยท่วมซ้ำ ≥'+RULES.expo+'% ของพื้นที่ (GISTDA) · <b>+1 ระดับ</b> ถ้ามีสถานีวัดระดับน้ำ GISTDA ที่ระดับ '+RULES.stnCls+' และข้อมูลไม่เก่าเกิน '+RULES.stale+' ชม.<br>'+
+   '• <b>ผลกระทบ 6/12/24 ชม.</b> จากฝนสะสมในช่วงนั้น: &lt;'+RULES.sev[0]+' = ปกติ · '+RULES.sev[0]+'–'+RULES.sev[1]+' = เฝ้าระวัง · '+RULES.sev[1]+'–'+RULES.sev[2]+' = ท่วมขัง · '+RULES.sev[2]+'–'+RULES.sev[3]+' = น้ำเพิ่ม · ≥'+RULES.sev[3]+' = เสี่ยงสูง (เลื่อนขึ้น 1 ขั้นถ้าพื้นที่ท่วมซ้ำสูง)<br>'+
+   '• ▲ = ระดับแนะนำสูงกว่าที่บันทึกในชีต · ปุ่ม "ใช้ค่านี้" จะเขียนลงแท็บ Districts (ต้องมีสิทธิ์ EDITOR/ADMIN และยืนยันก่อน) · ระดับที่ประกาศจริงยังเป็นดุลยพินิจของผู้บัญชาการเหตุการณ์<br>'+
+   '• แหล่งข้อมูล: GISTDA GFlood (สถานีวัดระดับน้ำ) · GISTDA FL_Flood (น้ำท่วมซ้ำซาก) · ปภ. ข้อมูลเปิด (ปภ.จังหวัด/ศูนย์ อปพร. ผ่าน GISTDA) · พยากรณ์ฝน Open-Meteo (แบบจำลองอากาศ) — ไม่ใช่ประกาศทางการของกรมอุตุนิยมวิทยา</div></details></div>';
+}
+async function applySug(names){
+  if(!canWrite())return toast('🔒 ต้องใช้ Token ระดับ EDITOR/ADMIN เพื่อบันทึกลงชีต',1);
+  const list=names.map(n=>[n,assess(n)]).filter(x=>x[1]);
+  if(!list.length)return toast('ยังไม่มีผลประเมิน',1);
+  if(!confirm('บันทึกระดับและผลกระทบที่ระบบแนะนำ ลงแท็บ Districts ของ Google Sheet?\n\n'+list.map(([n,a])=>n+' → '+a.level+' ('+a.h6+'/'+a.h12+'/'+a.h24+')').join('\n')))return;
+  try{
+    for(const [n,a] of list){const cur=D('Districts').find(d=>d.district===n);
+      const row={...(cur||{}),id:cur?cur.id:genId('Districts'),district:n,level:a.level,h6:a.h6,h12:a.h12,h24:a.h24};
+      await crud(cur?'update':'create','Districts',row)}
+    toast('✓ บันทึกค่าแนะนำลง Sheet แล้ว '+list.length+' อำเภอ');renderView(true);
+  }catch(e){toast(e.message,1)}
+}
+function paintExtra(){
+  if(!map||!mapL.st)return;mapL.st.clearLayers();mapL.dp.clearLayers();
+  const cc={1:'#22c55e',2:'#facc15',3:'#f97316',4:'#ef4444'};
+  STN.filter(x=>x.lat).forEach(x=>L.circleMarker([x.lat,x.lng],{radius:8,color:'#fff',weight:2,fillColor:cc[x.cls]||'#64748b',fillOpacity:.95,pane:'markerPane'}).bindPopup('<b>สถานีวัดระดับน้ำ '+esc(x.name)+'</b><br>อ.'+esc(x.district)+'<br>ระดับน้ำ '+x.value+' · '+(x.pct!=null?x.pct.toFixed(0):'-')+'% ของตลิ่ง · ระดับ '+x.cls+'<br><small>ข้อมูล GISTDA GFlood ณ '+thDT(x.t)+(stnFresh(x.t)?'':' (เก่า)')+'</small>').addTo(mapL.st));
+  const ic=(t,c)=>L.divIcon({className:'',iconSize:[24,24],html:'<div style="width:24px;height:24px;border-radius:50%;background:'+c+';color:#fff;border:2px solid #fff;display:grid;place-items:center;font:700 11px Prompt;box-shadow:0 2px 6px rgba(0,0,0,.5)">'+t+'</div>'});
+  if(DPROV)L.marker([DPROV.lat,DPROV.lng],{icon:ic('ปภ','#b91c1c'),zIndexOffset:900}).bindPopup('<b>ปภ.จังหวัด'+esc(DPROV.name)+'</b><br><small>ข้อมูลเปิด กรมป้องกันและบรรเทาสาธารณภัย</small>').addTo(mapL.dp);
+  const lat={};if(GEO)GEO.features.forEach(f=>lat[f.properties.name]=centerOf(f));
+  AOP_ROWS.forEach(r=>{const la=+r.LATITUDE,ln=+r.LONGITUDE;if(la&&ln)L.marker([la,ln],{icon:ic('อ','#7c3aed')}).bindPopup('<b>'+esc(r.NAME)+'</b><br>อปพร. '+fmt(+r.VOLUNTEER_||0)+' คน<br><small>ข้อมูลเปิด ปภ. (อาจไม่เป็นปัจจุบัน)</small>').addTo(mapL.dp)});
+}
 /* ---- บูรณาการข้อมูลภูมิสารสนเทศ: GISTDA (ArcGIS REST ที่ตรวจสอบแล้ว) + ชั้นข้อมูลจากแท็บ GeoLayers (ปภ./อื่นๆ) ---- */
 const GISTDA_FL='https://gistdaportal.gistda.or.th/data/rest/services/FL_Flood/';
 const BUILTIN_GEO=[
@@ -591,27 +697,27 @@ async function drawMap(){
   const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'});
   map.createPane('geo');map.getPane('geo').style.zIndex=450;map.getPane('geo').style.pointerEvents='none';
   const geoOv={};geoList().forEach(g=>{try{const ly=makeGeoLayer(g);geoOv['🛰 '+g.provider+' · '+g.name]=ly;if(g.on)ly.addTo(map)}catch(e){console.warn(e)}});
-  mapL={dist:L.layerGroup().addTo(map),lab:L.layerGroup().addTo(map),fac:L.layerGroup().addTo(map),sh:L.layerGroup().addTo(map)};
-  L.control.layers({'ภาพดาวเทียม (Esri)':sat,'แผนที่ถนน (OSM)':osm},{'ชื่อสถานที่':lab,'ขอบเขตอำเภอ':mapL.dist,'ชื่อ/ค่าอำเภอ':mapL.lab,'หน่วยบริการ (OSM)':mapL.fac,'หน่วยบริการจาก Sheet':mapL.sh,...geoOv},{collapsed:true}).addTo(map);
+  mapL={dist:L.layerGroup().addTo(map),lab:L.layerGroup().addTo(map),fac:L.layerGroup().addTo(map),sh:L.layerGroup().addTo(map),st:L.layerGroup().addTo(map),dp:L.layerGroup().addTo(map)};
+  L.control.layers({'ภาพดาวเทียม (Esri)':sat,'แผนที่ถนน (OSM)':osm},{'ชื่อสถานที่':lab,'ขอบเขตอำเภอ':mapL.dist,'ชื่อ/ค่าอำเภอ':mapL.lab,'หน่วยบริการ (OSM)':mapL.fac,'หน่วยบริการจาก Sheet':mapL.sh,'สถานีวัดระดับน้ำ GISTDA (GFlood)':mapL.st,'ปภ.จังหวัด / ศูนย์ อปพร. (ข้อมูลเปิด ปภ.)':mapL.dp,...geoOv},{collapsed:true}).addTo(map);
   L.control.attribution({prefix:false}).addTo(map).addAttribution('geoBoundaries · OpenGISData-Thailand · © OSM contributors · ชั้นน้ำท่วม © GISTDA');
   map.fitBounds(L.geoJSON(GEO).getBounds(),{padding:[10,10]});
   const zc=()=>map.getContainer().classList.toggle('z-hi',map.getZoom()>=11);map.on('zoomend',zc);zc();
   const lg=L.control({position:'bottomleft'});lg.onAdd=()=>{const d=L.DomUtil.create('div');d.id='lg';d.style.cssText='background:rgba(5,11,26,.84);color:#e8f0ff;padding:8px 11px;border-radius:10px;font-size:.72rem';return d};lg.addTo(map);
   $('#mapTools').innerHTML=`<select id="mM" style="width:auto;padding:3px 8px;font-size:.72rem">${Object.entries(METRICS).map(([k,m])=>`<option value="${k}" ${k===mapMetric?'selected':''}>${m[0]}</option>`).join('')}</select> <select id="mP" style="width:auto;padding:3px 8px;font-size:.72rem"><option value="risk" ${mapPal==='risk'?'selected':''}>สีมาตรฐานความเสี่ยง</option><option value="green" ${mapPal==='green'?'selected':''}>เขียว (เข้ม = มาก)</option></select>`;
   $('#mM').onchange=e=>{mapMetric=e.target.value;paintMap()};$('#mP').onchange=e=>{mapPal=e.target.value;paintMap()};
-  paintMap();computeExposure();
+  paintMap();paintExtra();computeExposure();loadExtra();
 }
 function paintMap(){
   if(!map||!GEO)return;const [title,fn,fx]=METRICS[mapMetric],PL=mapPal==='risk'?RISKPAL:GREEN;
   const by={};D('Districts').forEach(d=>by[d.district]=d);
-  const rowFor=nm=>by[nm]||(mapMetric==='gexp'?{district:nm}:null);
+  const rowFor=nm=>by[nm]||(['gexp','fc24','sug'].includes(mapMetric)?{district:nm}:null);
   const vals=GEO.features.map(f=>rowFor(f.properties.name)?fn(rowFor(f.properties.name)):0),max=fx||Math.max(1,...vals),cls=v=>Math.max(0,Math.min(4,Math.floor(v/max*5-1e-9)));
   ['dist','lab','fac','sh'].forEach(k=>mapL[k].clearLayers());
   GEO.features.forEach((f,i)=>{const d=rowFor(f.properties.name),v=vals[i];
     const l=L.geoJSON(f,{style:{fillColor:d?PL[cls(v)]:'#64748b',fillOpacity:d?.78:.2,color:'#fff',weight:1.6},onEachFeature:(_,ly)=>{
       ly.bindPopup(d?`<b>อ.${esc(d.district)}</b> <small>(${esc(f.properties.name_en)})</small><br>ระดับ: ${esc(d.level)} ${esc(d.trend||'')}<br>6/12/24 ชม.: ${esc(d.h6||'-')} · ${esc(d.h12||'-')} · ${esc(d.h24||'-')}<br>กลุ่มเปราะบางในทะเบียน: ${D('Vulnerable').filter(x=>x.district===d.district).length} ราย${EXPO[d.district]?'<br>น้ำท่วมซ้ำซาก (GISTDA): '+EXPO[d.district].pct.toFixed(1)+'% ≈ '+EXPO[d.district].km2.toFixed(0)+' ตร.กม.':''}`:`<b>อ.${esc(f.properties.name)}</b><br>ไม่มีข้อมูลในแท็บ Districts`);
       ly.on({mouseover:e=>e.target.setStyle({weight:3,color:'#facc15'}),mouseout:e=>e.target.setStyle({weight:1.6,color:'#fff'})})}}).addTo(mapL.dist);
-    const vt=d?(mapMetric==='vul'?v+' ราย':mapMetric==='gexp'?v.toFixed(1)+'%':mapMetric==='rain'?v+' มม.':mapMetric==='risk'?d.level+' '+(d.trend||''):['ปกติ','เฝ้าระวัง','ท่วมขัง','น้ำเพิ่ม','เสี่ยงสูง'][v]):'ไม่มีข้อมูล';
+    const vt=d?(mapMetric==='vul'?v+' ราย':mapMetric==='gexp'?v.toFixed(1)+'%':mapMetric==='fc24'?v.toFixed(0)+' มม.':mapMetric==='sug'?(assess(d.district)?.level||'-'):mapMetric==='rain'?v+' มม.':mapMetric==='risk'?d.level+' '+(d.trend||''):['ปกติ','เฝ้าระวัง','ท่วมขัง','น้ำเพิ่ม','เสี่ยงสูง'][v]):'ไม่มีข้อมูล';
     L.marker(l.getBounds().getCenter(),{interactive:false,icon:L.divIcon({className:'',iconSize:[0,0],html:`<div class="dlab"><b>${esc(f.properties.name)}</b><span>${esc(vt)}</span></div>`})}).addTo(mapL.lab)});
   const hosp=D('Hospitals'),norm=s=>String(s).replace(/โรงพยาบาล|รพ\.|\(.*?\)|\s|[​-]/g,'');
   const mk=(la,ln,t,bc,html)=>L.marker([la,ln],{icon:L.divIcon({className:'',iconSize:[22,22],html:`<div style="width:22px;height:22px;border-radius:6px;background:#fff;color:#0b5ed7;border:2px solid ${bc};display:grid;place-items:center;font:700 12px Prompt;box-shadow:0 2px 6px rgba(0,0,0,.5)">${t}</div>`})}).bindPopup(html);
