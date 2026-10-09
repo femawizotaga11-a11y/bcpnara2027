@@ -168,7 +168,7 @@ pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.
     <label>รหัสสิทธิ์ (Token) <small>ADMIN / EDITOR / VIEWER ที่ตั้งใน Code.gs</small></label><input id="iToken" type="password" autocomplete="off">
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
      <button class="pri" id="iTest">ตรวจสอบการเชื่อมต่อ</button><button id="iPull">⬇ ดึงข้อมูล (Pull)</button><button id="iPush" data-w="admin">⬆ ส่งข้อมูล (Push ทุกแท็บ)</button>
-     <button id="iSetup" data-w="admin">🏗 สร้าง/ซ่อมแซมฐานข้อมูลใน Sheet</button><a id="iOpen" target="_blank" rel="noopener"><button>↗ เปิด Google Sheet</button></a></div>
+     <button id="iSetup" data-w="admin">🏗 สร้าง/ซ่อมแซมฐานข้อมูลใน Sheet</button><a id="iOpen" target="_blank" rel="noopener"><button>↗ เปิด Google Sheet</button></a><button id="iPingOpen" title="เปิด Web App URL พร้อม ?action=ping ในแท็บใหม่ ต้องเห็น JSON {&quot;ok&quot;:true…}">🩺 เปิด URL ทดสอบ</button></div>
     <div class="hint">Pull = อ่านทุกแท็บจาก Sheet · Push = เขียนทับทุกแท็บที่มีข้อมูลในหน้านี้ (เฉพาะ ADMIN) · การเพิ่ม/แก้ไข/ลบในแต่ละเมนูจะ Push ทีละแถวอัตโนมัติ</div>
    </fieldset>
    <fieldset><legend>② สถานะแท็บในฐานข้อมูล</legend><div id="intTabsStat" class="hint"></div></fieldset>
@@ -276,13 +276,22 @@ const isAdmin=()=>ST.conn==='api'&&ST.role==='admin';
 const showPII=()=>ST.conn==='api'&&(ST.role==='admin'||ST.role==='editor');
 
 /* ============ Data layer: GAS API + gviz ============ */
+function scriptUrlProblem(u){
+  u=String(u||'').trim();if(!u)return 'ยังไม่ได้ใส่ Web App URL';
+  if(/docs\.google\.com\/spreadsheets/.test(u))return 'นี่คือลิงก์ของ Google Sheet ไม่ใช่ Web App URL — ต้องเป็นลิงก์จากปุ่ม Deploy ที่ขึ้นต้น https://script.google.com/macros/s/…/exec';
+  if(/script\.google\.com\/.*\/edit/.test(u)||/script\.google\.com\/home/.test(u))return 'นี่คือลิงก์หน้าแก้โค้ด Apps Script — ต้องใช้ Web App URL ที่ได้หลัง Deploy';
+  if(/\/dev(\?|$)/.test(u))return 'URL ลงท้าย /dev ใช้ได้เฉพาะเจ้าของ — ต้องใช้ URL ลงท้าย /exec จาก Deploy → New deployment';
+  if(!/^https:\/\/script\.google\.com\/(a\/[^/]+\/)?macros\/s\/[\w-]+\/exec\/?$/.test(u)&&!/^https:\/\/script\.google\.com\/a\/macros\/[^/]+\/s\/[\w-]+\/exec\/?$/.test(u))return 'รูปแบบ URL ไม่ถูกต้อง ต้องเป็น https://script.google.com/macros/s/…/exec';
+  return '';
+}
 async function http(method,action,payload){
   if(!S.script)throw new Error('ยังไม่ได้ตั้งค่า Web App URL');
+  const bad=scriptUrlProblem(S.script);if(bad)throw new Error(bad);
   let r;
   try{
     r=method==='GET'?await fetch(S.script+'?'+new URLSearchParams({action,token:S.token,...(payload||{})}))
       :await fetch(S.script,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token:S.token,...payload})});
-  }catch(e){throw new Error('เชื่อมต่อ Web App ไม่ได้ — ตรวจ Deploy: Who has access = Anyone และ URL ลงท้าย /exec')}
+  }catch(e){throw new Error('เชื่อมต่อ Web App ไม่ได้ — ตรวจตามลำดับ: ① Deploy → Manage deployments → Who has access ต้องเป็น "Anyone" (ไม่ใช่ Anyone with Google account) และ Execute as = Me ② หลังแก้โค้ดต้อง Deploy "New version" ③ เปิดลิงก์ ?action=ping ในแท็บใหม่ ต้องเห็น JSON (ปุ่ม "เปิด URL ทดสอบ" ในหน้าต่าง Sheet & GAS) ④ รัน setupDatabase หนึ่งครั้งใน Apps Script เพื่ออนุญาตสิทธิ์ ⑤ ถ้าเปิดไฟล์จากเครื่อง (file://) ให้เปิดผ่าน GitHub Pages')}
   let j;try{j=await r.json()}catch(e){throw new Error('Web App ตอบกลับไม่ใช่ JSON — ตรวจว่า Deploy เวอร์ชันล่าสุดแล้ว')}
   if(!j.ok)throw new Error(j.error||'เกิดข้อผิดพลาด');return j;
 }
@@ -967,6 +976,7 @@ function intStatus(){
   setConn();
 }
 function readInt(){S.sheet=$('#iSheet').value.trim();S.script=$('#iScript').value.trim();S.token=$('#iToken').value;save()}
+$('#iPingOpen').onclick=()=>{readInt();const bad=scriptUrlProblem(S.script);if(bad)return toast(bad,1);window.open(S.script.replace(/\/$/,'')+'?action=ping','_blank','noopener')};
 let codeTxt='';
 async function loadCode(){
   if(codeTxt)return;
