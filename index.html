@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="th" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BCP War Room · สสจ.นราธิวาส</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050b1a;--bg2:#0a1630;--card:rgba(16,30,62,.72);--card-b:rgba(120,170,255,.16);
+  --tx:#e8f0ff;--mu:#8ea3c7;--ac:#38bdf8;--ac2:#818cf8;
+  --red:#ef4444;--org:#f97316;--yel:#facc15;--grn:#22c55e;--blu:#3b82f6;--pink:#ec4899;
+  --shadow:0 10px 40px rgba(0,0,0,.45);--grid:rgba(255,255,255,.07)
+}
+:root[data-theme="light"]{
+  --bg:#eaf1fb;--bg2:#dbe7f7;--card:rgba(255,255,255,.82);--card-b:rgba(30,64,130,.14);
+  --tx:#0f1f3d;--mu:#587099;--shadow:0 8px 28px rgba(30,64,130,.14);--grid:rgba(0,0,0,.08)
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{font-family:'Prompt',system-ui,sans-serif;color:var(--tx);min-height:100vh;
+  background:radial-gradient(1200px 600px at 10% -10%,color-mix(in srgb,var(--ac) 22%,transparent),transparent 60%),
+  radial-gradient(900px 500px at 100% 0,color-mix(in srgb,var(--ac2) 20%,transparent),transparent 60%),var(--bg);
+  background-attachment:fixed}
+.mono{font-family:'JetBrains Mono',monospace}
+header{position:sticky;top:0;z-index:50;display:flex;gap:14px;align-items:center;padding:10px 20px;
+  backdrop-filter:blur(16px);background:color-mix(in srgb,var(--bg) 78%,transparent);border-bottom:1px solid var(--card-b)}
+.logo{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:24px;
+  background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 0 24px color-mix(in srgb,var(--ac) 60%,transparent)}
+.ttl h1{font-size:1.15rem;font-weight:700;line-height:1.2}
+.ttl p{font-size:.72rem;color:var(--mu)}
+.sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:99px;font-size:.78rem;
+  border:1px solid var(--card-b);background:var(--card)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--mu)}
+.dot.live{background:var(--grn);box-shadow:0 0 0 0 var(--grn);animation:pulse 1.8s infinite}
+.dot.err{background:var(--red)}.dot.demo{background:var(--yel)}
+@keyframes pulse{70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+button{font:inherit;cursor:pointer;color:var(--tx);border:1px solid var(--card-b);background:var(--card);
+  padding:7px 13px;border-radius:10px;transition:.2s}
+button:hover{border-color:var(--ac);transform:translateY(-1px)}
+button.pri{background:linear-gradient(135deg,var(--ac),var(--ac2));border:0;color:#04122b;font-weight:600}
+button.dng{border-color:var(--red);color:var(--red)}
+main{padding:18px 20px 70px;max-width:1800px;margin:auto}
+.banner{display:flex;gap:18px;align-items:center;flex-wrap:wrap;padding:18px 22px;border-radius:20px;margin-bottom:16px;
+  background:linear-gradient(120deg,color-mix(in srgb,var(--lv,var(--org)) 28%,var(--bg2)),var(--bg2));
+  border:1px solid color-mix(in srgb,var(--lv,var(--org)) 55%,transparent);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.banner:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 40%,rgba(255,255,255,.07) 50%,transparent 60%);
+  transform:translateX(-100%);animation:sh 6s infinite}
+@keyframes sh{to{transform:translateX(100%)}}
+.lvl{font-size:2.3rem;font-weight:700;letter-spacing:.5px}
+.lvl small{display:block;font-size:.8rem;color:var(--mu);font-weight:400}
+.badge{padding:5px 14px;border-radius:99px;font-weight:700;font-size:.85rem;background:var(--lv,var(--org));color:#111}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.kpi{padding:14px 16px;border-radius:16px;background:var(--card);border:1px solid var(--card-b);box-shadow:var(--shadow);
+  position:relative;overflow:hidden;transition:.25s}
+.kpi:hover{transform:translateY(-3px);border-color:var(--c,var(--ac))}
+.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--ac))}
+.kpi .l{font-size:.74rem;color:var(--mu)}
+.kpi .v{font-size:1.9rem;font-weight:700;line-height:1.15;color:var(--c,var(--tx))}
+.kpi .v small{font-size:.8rem;color:var(--mu);font-weight:400;margin-left:4px}
+.kpi .n{font-size:.7rem;color:var(--mu)}
+.kpi.flash{animation:fl 1.2s}
+@keyframes fl{0%{background:color-mix(in srgb,var(--ac) 45%,transparent)}}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.card{grid-column:span 4;background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:16px;
+  backdrop-filter:blur(10px);box-shadow:var(--shadow);min-width:0}
+.c6{grid-column:span 6}.c8{grid-column:span 8}.c12{grid-column:span 12}.c3{grid-column:span 3}
+@media(max-width:1100px){.card,.c6,.c8,.c3{grid-column:span 12}}
+.card h2{font-size:.98rem;font-weight:600;display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.card h2 i{font-style:normal;display:grid;place-items:center;width:26px;height:26px;border-radius:8px;font-size:.78rem;
+  background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04122b;font-weight:700}
+.card h2 .tools{margin-left:auto;font-size:.7rem;color:var(--mu);font-weight:400}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{color:var(--mu);font-weight:500;text-align:left;padding:6px 8px;border-bottom:1px solid var(--card-b);position:sticky;top:0;background:color-mix(in srgb,var(--bg2) 92%,transparent)}
+td{padding:6px 8px;border-bottom:1px solid var(--grid)}
+tr:hover td{background:rgba(120,170,255,.07)}
+.sc{max-height:340px;overflow:auto}
+.tag{display:inline-block;min-width:54px;text-align:center;padding:2px 10px;border-radius:7px;font-weight:600;font-size:.74rem;color:#111}
+.t-red{background:var(--red);color:#fff}.t-org{background:var(--org)}.t-yel{background:var(--yel)}.t-grn{background:var(--grn)}.t-blu{background:var(--blu);color:#fff}.t-gry{background:#64748b;color:#fff}
+.led{display:inline-block;width:11px;height:11px;border-radius:50%}
+.led.G{background:var(--grn);box-shadow:0 0 8px var(--grn)}.led.Y{background:var(--yel);box-shadow:0 0 8px var(--yel)}
+.led.R{background:var(--red);box-shadow:0 0 8px var(--red)}.led.N{background:#64748b}
+.bar{height:8px;border-radius:9px;background:var(--grid);overflow:hidden}
+.bar>b{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--ac),var(--ac2));transition:width 1s}
+#map{height:430px;border-radius:14px;z-index:1}
+.chartbox{position:relative;height:250px}
+.alerts{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow:auto}
+.al{padding:9px 12px;border-radius:10px;border-left:4px solid var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);font-size:.8rem}
+.al b{color:var(--c)}
+.bcp{display:flex;flex-direction:column;gap:9px}
+.bi{padding:11px 13px;border-radius:12px;border:1px solid var(--card-b);background:rgba(120,170,255,.05)}
+.bi .h{display:flex;gap:10px;align-items:center;font-size:.84rem;font-weight:500}
+.bi .no{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--ac);color:#04122b;font-weight:700;font-size:.75rem;flex:none}
+.bi .m{font-size:.72rem;color:var(--mu);margin:5px 0 6px 34px}
+.foot{position:fixed;bottom:0;left:0;right:0;z-index:40;display:flex;gap:22px;justify-content:center;flex-wrap:wrap;padding:8px 14px;
+  font-size:.76rem;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 85%,transparent);border-top:1px solid var(--card-b)}
+.foot b{color:var(--grn)}
+/* drawer */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);z-index:90;display:none}
+.ov.on{display:block}
+.dr{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);z-index:100;background:var(--bg2);border-left:1px solid var(--card-b);
+  transform:translateX(100%);transition:.3s;display:flex;flex-direction:column;box-shadow:-20px 0 60px rgba(0,0,0,.5)}
+.dr.on{transform:none}
+.dr.wide{width:min(1100px,100%)}
+.dh{padding:16px 20px;display:flex;align-items:center;border-bottom:1px solid var(--card-b);font-weight:600}
+.db{padding:18px 20px;overflow:auto;flex:1}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button.on{background:var(--ac);color:#04122b;border-color:var(--ac)}
+fieldset{border:1px solid var(--card-b);border-radius:14px;padding:14px;margin-bottom:14px}
+legend{padding:0 8px;color:var(--ac);font-weight:600;font-size:.85rem}
+label{display:block;font-size:.76rem;color:var(--mu);margin:9px 0 3px}
+input,select,textarea{width:100%;font:inherit;font-size:.85rem;color:var(--tx);background:rgba(120,170,255,.08);
+  border:1px solid var(--card-b);border-radius:9px;padding:8px 10px;outline:0}
+input:focus,select:focus,textarea:focus{border-color:var(--ac)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:.72rem;color:var(--mu);margin-top:4px;line-height:1.5}
+.sw{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:.85rem}
+.sw input{width:auto}
+td input{padding:4px 6px;font-size:.78rem;min-width:70px}
+pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.72rem;overflow:auto;max-height:300px}
+#toast{position:fixed;top:76px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px}
+.ts{padding:10px 16px;border-radius:12px;background:var(--bg2);border:1px solid var(--ac);box-shadow:var(--shadow);font-size:.82rem;animation:in .3s}
+@keyframes in{from{transform:translateX(40px);opacity:0}}
+.leaflet-container{background:var(--bg2)}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--bg2);color:var(--tx)}
+.mk{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:.65rem;font-weight:700;color:#111;border:2px solid #fff;
+  box-shadow:0 0 0 0 var(--c);animation:pulse2 2s infinite}
+@keyframes pulse2{70%{box-shadow:0 0 0 14px transparent}}
+@media print{header,.foot,button{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🛡️</div>
+  <div class="ttl"><h1 id="orgTitle">BCP War Room · สสจ.นราธิวาส</h1><p>แผนความต่อเนื่องทางธุรกิจ (BCP) ด้านการแพทย์และสาธารณสุข · ศูนย์บัญชาการน้ำท่วม</p></div>
+  <div class="sp"></div>
+  <span class="pill"><span class="dot" id="dot"></span><span id="st">กำลังเชื่อมต่อ…</span></span>
+  <span class="pill mono" id="clock">--:--:--</span>
+  <button id="bRef" title="รีเฟรชข้อมูล">⟳ รีเฟรช</button>
+  <button id="bEdit" title="แก้ไขข้อมูลใน Google Sheet">✎ จัดการข้อมูล</button>
+  <button id="bSet" class="pri">⚙ ตั้งค่า</button>
+</header>
+
+<main>
+  <section class="banner" id="banner">
+    <div class="lvl mono"><small>ระดับสถานการณ์จังหวัด</small><span id="lvlTxt">LEVEL 2</span></div>
+    <span class="badge" id="lvlName">PRE-ACTIVATE BCP</span>
+    <div style="flex:1;min-width:220px"><div id="lvlNote" style="font-weight:500"></div><div class="hint" id="lvlTime"></div></div>
+    <div id="bMeta" class="pill">นราธิวาส · ฤดูน้ำท่วม 2569</div>
+  </section>
+
+  <section class="kpis" id="kpis"></section>
+
+  <div class="grid">
+    <div class="card c8"><h2><i>1</i>แผนที่สถานการณ์และความเสี่ยงรายอำเภอ<span class="tools" id="mapTools"></span></h2><div id="map"></div></div>
+    <div class="card"><h2><i>!</i>การแจ้งเตือนอัตโนมัติ<span class="tools" id="alCnt"></span></h2><div class="alerts" id="alerts"></div></div>
+
+    <div class="card c6"><h2><i>2</i>ระดับความเสี่ยงรายอำเภอ</h2><div class="sc"><table id="tDist"></table></div></div>
+    <div class="card c6"><h2><i>3</i>ระดับคาดการณ์ผลกระทบ 6 / 12 / 24 ชม.</h2><div class="chartbox"><canvas id="chDist"></canvas></div></div>
+
+    <div class="card c8"><h2><i>5</i>สถานะโรงพยาบาล (13 แห่ง)<span class="tools">ER · LR · OR · ICU · Dialysis · OPD/NCD</span></h2><div class="sc"><table id="tHosp"></table></div></div>
+    <div class="card"><h2><i>6</i>รพ.สต. (111 แห่ง)</h2><div class="chartbox"><canvas id="chRph"></canvas></div></div>
+
+    <div class="card"><h2><i>7</i>กลุ่มผู้ป่วยเปราะบาง<span class="tools" id="vulTot"></span></h2><div class="chartbox"><canvas id="chVul"></canvas></div></div>
+    <div class="card"><h2><i>8</i>ทรัพยากรและความต่อเนื่อง</h2><div class="sc" id="resList"></div></div>
+    <div class="card"><h2><i>4</i>เส้นทางและการเข้าถึง</h2><div class="sc"><table id="tRoad"></table></div></div>
+
+    <div class="card c12"><h2><i>BCP</i>ความก้าวหน้าตามแผน BCP 10 ข้อ<span class="tools" id="bcpAvg"></span></h2><div class="bcp" id="bcp"></div></div>
+  </div>
+</main>
+
+<div class="foot" id="foot"></div>
+<div id="toast"></div>
+<div class="ov" id="ov"></div>
+
+<!-- Settings -->
+<aside class="dr" id="drSet">
+  <div class="dh">⚙ ตั้งค่าระบบ<span class="sp"></span><button data-close>✕</button></div>
+  <div class="db">
+    <fieldset><legend>🔗 เชื่อมต่อ Google Sheet (อ่านแบบ Real-time)</legend>
+      <label>Google Sheet URL หรือ Spreadsheet ID</label>
+      <input id="sSheet" placeholder="https://docs.google.com/spreadsheets/d/xxxxxxxx/edit">
+      <div class="hint">ต้องแชร์เป็น <b>"ทุกคนที่มีลิงก์ → ผู้ดู (Viewer)"</b> หรือ File → Share → Publish to web</div>
+      <div class="sw"><input type="checkbox" id="sDemo"><span>โหมดสาธิต (ใช้ข้อมูลตัวอย่างในหน้าเว็บ)</span></div>
+      <label>ความถี่รีเฟรชอัตโนมัติ</label>
+      <select id="sInt"><option value="0">ปิด</option><option value="10">ทุก 10 วินาที</option><option value="30">ทุก 30 วินาที</option><option value="60">ทุก 1 นาที</option><option value="300">ทุก 5 นาที</option></select>
+      <button id="bTest" style="margin-top:10px">ทดสอบการเชื่อมต่อ</button>
+    </fieldset>
+
+    <fieldset><legend>🔓 ปลดล็อกการเขียนข้อมูล (Apps Script)</legend>
+      <label>Web App URL (Apps Script /exec)</label><input id="sScript" placeholder="https://script.google.com/macros/s/…/exec">
+      <label>รหัสผ่านสำหรับแก้ไข (ตั้งเองใน Code.gs)</label><input id="sToken" type="password" placeholder="Secret token">
+      <div class="hint">ใส่ครบทั้งสองช่อง จะปลดล็อกเมนู "จัดการข้อมูล" ให้แก้ไข/เพิ่ม/ลบข้อมูล แล้วบันทึกลง Sheet ได้ทันที</div>
+      <div style="display:flex;gap:8px;margin-top:10px"><button id="bCode">ดูโค้ด Code.gs</button><button id="bTpl">ดาวน์โหลดเทมเพลต CSV</button></div>
+    </fieldset>
+
+    <fieldset><legend>📑 ชื่อแท็บใน Sheet</legend><div class="row2" id="sTabs"></div>
+      <div class="hint">เปลี่ยนชื่อแท็บให้ตรงกับของจริงใน Google Sheet ของคุณ</div></fieldset>
+
+    <fieldset><legend>🚨 เกณฑ์แจ้งเตือน</legend>
+      <div class="row2"><div><label>ฝน 24 ชม. เกิน (มม.)</label><input id="sR24" type="number"></div>
+      <div><label>ฝน 72 ชม. เกิน (มม.)</label><input id="sR72" type="number"></div>
+      <div><label>Autonomy ต่ำกว่า (ชม.)</label><input id="sAut" type="number"></div>
+      <div><label>ความคืบหน้า BCP ต่ำกว่า (%)</label><input id="sBcp" type="number"></div></div>
+      <div class="sw"><input type="checkbox" id="sSnd"><span>เสียงเตือนเมื่อมีสถานะวิกฤตใหม่</span></div>
+      <div class="sw"><input type="checkbox" id="sNote"><span>แจ้งเตือนผ่านเบราว์เซอร์ (Notification)</span></div>
+    </fieldset>
+
+    <fieldset><legend>🎨 การแสดงผล</legend>
+      <label>ชื่อหน่วยงาน / หัวเรื่อง</label><input id="sTitle">
+      <div class="row2"><div><label>ธีม</label><select id="sTheme"><option value="dark">มืด (Command Center)</option><option value="light">สว่าง</option></select></div>
+      <div><label>สีหลัก</label><input id="sAcc" type="color" style="height:38px;padding:2px"></div></div>
+      <label>ศูนย์กลางแผนที่ (lat, lng)</label><input id="sMap" placeholder="6.25,101.85">
+      <div class="sw"><input type="checkbox" id="sAnim"><span>เปิดแอนิเมชัน</span></div>
+    </fieldset>
+
+    <fieldset><legend>💾 ข้อมูลการตั้งค่า</legend>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button id="bExp">ส่งออก JSON</button><button id="bImp">นำเข้า JSON</button><button class="dng" id="bRst">รีเซ็ตทั้งหมด</button></div>
+      <input type="file" id="fImp" accept=".json" hidden>
+    </fieldset>
+    <button class="pri" id="bSave" style="width:100%;padding:12px">บันทึกและนำไปใช้</button>
+  </div>
+</aside>
+
+<!-- Editor -->
+<aside class="dr wide" id="drEd">
+  <div class="dh">✎ จัดการข้อมูล · ซิงก์กับ Google Sheet<span class="sp"></span><span class="pill" id="edState"></span>&nbsp;<button data-close>✕</button></div>
+  <div class="db"><div class="tabs" id="edTabs"></div><div class="sc" style="max-height:62vh"><table id="edTbl"></table></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button id="edAdd">＋ เพิ่มแถว</button><button id="edCsv">⬇ ส่งออก CSV</button><span class="sp"></span><button class="pri" id="edSave">💾 บันทึกลง Google Sheet</button></div>
+    <div class="hint" id="edHint"></div></div>
+</aside>
+
+<!-- Code viewer -->
+<aside class="dr" id="drCode">
+  <div class="dh">Code.gs · Google Apps Script<span class="sp"></span><button data-close>✕</button></div>
+  <div class="db"><ol class="hint" style="padding-left:18px;margin-bottom:10px"><li>เปิด Google Sheet → Extensions → Apps Script</li><li>วางโค้ดด้านล่าง แก้ SECRET</li><li>Deploy → New deployment → Web app → Execute as: <b>Me</b>, Access: <b>Anyone</b></li><li>คัดลอก URL /exec มาใส่ในเมนูตั้งค่า</li></ol>
+  <button id="bCopy" class="pri" style="margin-bottom:10px">คัดลอกโค้ด</button><pre id="codeTxt"></pre></div>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+'use strict';
+/* ============ Schema (หัวคอลัมน์ในแต่ละแท็บ) ============ */
+const SCHEMA={
+ KPI:{label:'ตัวชี้วัดหลัก',cols:['key','value','unit','note'],
+  rows:[['level','2','','LEVEL 2'],['level_name','PRE-ACTIVATE BCP','',''],['level_note','เฝ้าระวัง : เตรียมพร้อม','',''],
+   ['rain24','156.4','มม.','+32% จากสัปดาห์ก่อน'],['rain72','312.6','มม.','เสี่ยงเพิ่มขึ้น'],['crit_points','6','จุด','น้ำท่วมซ้ำซาก / สะพาน'],
+   ['roads_cut','11','จุด','หลัก 4 / สำรอง 7'],['hosp_watch','5','แห่ง','จาก 13 แห่ง (ขีดความสามารถลดลง)'],['rph_risk','18','แห่ง','จากทั้งหมด 111 แห่ง'],
+   ['deaths','0','ราย','Zero Preventable Death']]},
+ Districts:{label:'อำเภอ',cols:['district','level','trend','h6','h12','h24','lat','lng'],
+  rows:[['สุไหงโก-ลก','แดง','↑↑','เสี่ยงสูง','เสี่ยงสูง','น้ำเพิ่ม','6.030','101.970'],['ตากใบ','แดง','↑↑','เสี่ยงสูง','เสี่ยงสูง','น้ำเพิ่ม','6.256','102.054'],
+   ['ยี่งอ','ส้ม','↑','น้ำเพิ่ม','น้ำเพิ่ม','ท่วมขัง','6.390','101.790'],['สุไหงปาดี','ส้ม','↑','น้ำเพิ่ม','ท่วมขัง','ท่วมขัง','6.140','101.800'],
+   ['เมืองนราธิวาส','ส้ม','↑','ท่วมขัง','ท่วมขัง','ท่วมขัง','6.426','101.823'],['ระแงะ','ส้ม','↑','ท่วมขัง','ท่วมขัง','น้ำเพิ่ม','6.300','101.680'],
+   ['รือเสาะ','เหลือง','→','ท่วมขัง','ท่วมขัง','ท่วมขัง','6.350','101.500'],['เจาะไอร้อง','เหลือง','→','เฝ้าระวัง','เฝ้าระวัง','ท่วมขัง','6.250','101.770'],
+   ['จะแนะ','ปกติ','↑','เฝ้าระวัง','เฝ้าระวัง','ท่วมขัง','6.200','101.670'],['ศรีสาคร','เหลือง','→','ปกติ','เฝ้าระวัง','ท่วมขัง','6.110','101.520'],
+   ['แว้ง','เขียว','→','ปกติ','เฝ้าระวัง','ท่วมขัง','5.820','101.820'],['สุคิริน','เขียว','→','ปกติ','ปกติ','เฝ้าระวัง','5.970','101.700'],
+   ['บาเจาะ','เขียว','→','ปกติ','ปกติ','เฝ้าระวัง','6.520','101.960']]},
+ Hospitals:{label:'โรงพยาบาล',cols:['name','tier','level','ER','LR','OR','ICU','Dialysis','OPD','autonomy_hr'],
+  rows:[['นราธิวาส','A+','ส้ม','G','G','Y','G','N','R','48'],['สุไหงโก-ลก','A+','แดง','G','G','R','G','N','R','24'],['ระแงะ','S+','ส้ม','G','G','Y','R','N','R','36'],
+   ['ตากใบ','S+','ส้ม','G','G','Y','N','N','R','36'],['สุคิริน','M','เหลือง','G','G','G','N','N','Y','72'],['เจาะไอร้อง','M','เหลือง','G','G','Y','N','N','R','72'],
+   ['แว้ง','M','เหลือง','G','G','G','N','N','R','72'],['ยี่งอ','M','เหลือง','G','G','G','N','N','R','48'],['ระแงะ(2)','M','เหลือง','G','G','Y','N','N','R','72'],
+   ['จะแนะ','M','เหลือง','G','G','G','N','N','R','72'],['สุคิริน(S)','S','เขียว','G','G','G','N','N','G','72'],['บาเจาะ','S','เขียว','G','G','G','N','N','G','72'],['รือเสาะ','M','เหลือง','G','G','G','N','N','G','72']]},
+ RPH:{label:'รพ.สต.',cols:['status','count'],rows:[['ปกติ','58'],['เฝ้าระวัง','12'],['เสี่ยง','6'],['ปิด/ไม่สามารถให้บริการ','35']]},
+ Vulnerable:{label:'ผู้ป่วยเปราะบาง',cols:['category','count'],
+  rows:[['หญิงตั้งครรภ์เสี่ยงสูง / ใกล้คลอด','218'],['ผู้ป่วย Dialysis','164'],['Home O2 / Ventilator','137'],['ผู้ป่วยติดเตียง / พึ่งพาอุปกรณ์','264'],
+   ['ผู้ป่วยที่ขาดยาไม่ได้','195'],['SMI / จิตเวชรุนแรง','86'],['Palliative / device-dependent','48']]},
+ Resources:{label:'ทรัพยากร',cols:['name','amount','unit','status'],
+  rows:[['ไฟฟ้าสำรอง / Generator','72','ชม.','พร้อม'],['ออกซิเจน (รวมทุกแห่ง)','48','ชม.','เฝ้าระวัง'],['น้ำใช้สำรอง','72','ชม.','พร้อม'],['ยาจำเป็น / เวชภัณฑ์','30','วัน','พร้อม'],
+   ['เลือด (เพียงพอ/เสี่ยงขาด)','เพียงพอ','','พร้อม'],['น้ำมันเชื้อเพลิง','72','ชม.','เฝ้าระวัง'],['อาหาร','72','ชม.','พร้อม'],['กำลังคนขั้นต่ำ / ทีม A-B-C','85','%','เฝ้าระวัง'],['วัสดุอุปกรณ์เกินใช้','พร้อม','','พร้อม']]},
+ Roads:{label:'เส้นทาง',cols:['route','type','status','note'],
+  rows:[['ถนนสายหลัก นราธิวาส–ตากใบ','หลัก','ผ่านได้','เฝ้าระวังน้ำเอ่อ'],['ถนนสุไหงโก-ลก–สุไหงปาดี','หลัก','ตัดขาด','สะพานท่วม'],['ทางสำรอง 1 (ทล.4056)','สำรอง','ผ่านได้','ใช้ 4WD'],
+   ['ทางสำรอง 2 (ลำน้ำ/เรือ)','สำรอง','ผ่านได้','ใช้เรือ / ฮ.'],['สะพานบ้านเจ๊ะเห','หลัก','เสี่ยง','น้ำเอ่อ 40 ซม.']]},
+ BCP:{label:'แผน BCP 10 ข้อ',cols:['no','title','status','progress','owner','note'],
+  rows:[[1,'บูรณาการข้อมูลภูมิสารสนเทศ (GISTDA / ปภ.)','ดำเนินการ','80','ศูนย์ข้อมูล','ฐานข้อมูลแผนที่พื้นที่เสี่ยงภัยเพื่อประเมินสถานการณ์'],
+   [2,'บริหารจัดการเส้นทางคมนาคม + Bypass Routes (ย้อนหลัง 3 ปี)','ดำเนินการ','70','งานส่งต่อ','แผนที่เส้นทางถูกตัดขาดและเส้นทางสำรอง'],
+   [3,'ประเมินทรัพยากรทางการแพทย์ (Inventory รพ./รพ.สต.)','เสร็จสิ้น','100','งานพัสดุ','บัญชีทรัพยากรเป็นปัจจุบัน'],
+   [4,'กำหนดเป้าหมายฟื้นฟู RTO ของ รพ.แต่ละแห่ง','ดำเนินการ','85','ผอ.รพ.','กลับมาให้บริการขั้นวิกฤตตามกำหนด'],
+   [5,'บริหารกำลังคน ทำเนียบ ทีมตอบโต้ และกำลังสำรอง','ดำเนินการ','75','งานบุคคล','ทีม A-B-C'],
+   [6,'ทะเบียนกลุ่มเปราะบาง + Priority Evacuation (ชื่อ/ที่อยู่/โทร)','ดำเนินการ','90','งานปฐมภูมิ','1,284 ราย'],
+   [7,'ระบบส่งต่อผู้ป่วยฉุกเฉิน (Referral) + เส้นทางสำรอง','ดำเนินการ','80','งานส่งต่อ','OPOH Dynamic Referral'],
+   [8,'แผนสำรองด้านการสื่อสาร (ลำดับ 1 และ 2)','ดำเนินการ','65','ศูนย์สื่อสาร','Line / วิทยุสื่อสาร / ดาวเทียม'],
+   [9,'แผนยกระดับขอรับการสนับสนุน (Escalation Plan)','รอดำเนินการ','45','ผู้บริหาร','เมื่อเกิน RTO หรือทรัพยากรหมด'],
+   [10,'ทดสอบ/ซ้อมแผนและรายงานผล','รอดำเนินการ','30','ทุกกลุ่มงาน','']]}
+};
+const DEF={sheet:'',demo:true,interval:30,script:'',token:'',tabs:{},r24:150,r72:300,aut:36,bcp:60,sound:false,notify:false,
+ title:'BCP War Room · สสจ.นราธิวาส',theme:'dark',acc:'#38bdf8',map:'6.25,101.85',anim:true};
+Object.keys(SCHEMA).forEach(k=>DEF.tabs[k]=k);
+const LS='bcpnara.settings.v1';
+let S=load();
+let DATA={},prev={},timer=null,map,markers=[],charts={},edTab='KPI',edRows=[],lastSig='';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function load(){try{return {...DEF,...JSON.parse(localStorage.getItem(LS)||'{}'),tabs:{...DEF.tabs,...(JSON.parse(localStorage.getItem(LS)||'{}').tabs||{})}}}catch(e){return {...DEF}}}
+function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=v=>{const n=parseFloat(String(v).replace(/,/g,''));return isNaN(n)?0:n};
+const fmt=n=>n.toLocaleString('th-TH');
+function toast(m){const d=document.createElement('div');d.className='ts';d.textContent=m;$('#toast').append(d);setTimeout(()=>d.remove(),3800)}
+function sheetId(){const m=String(S.sheet).match(/\/d\/([\w-]+)/);return m?m[1]:String(S.sheet).trim()}
+
+/* ============ Data layer ============ */
+async function fetchTab(key){
+  const url=`https://docs.google.com/spreadsheets/d/${sheetId()}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(S.tabs[key])}&_=${Date.now()}`;
+  const r=await fetch(url);if(!r.ok)throw new Error(key+' HTTP '+r.status);
+  const t=await r.text();const j=JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1));
+  if(j.status==='error')throw new Error(key+': '+(j.errors?.[0]?.detailed_message||'error'));
+  const cols=SCHEMA[key].cols;
+  return j.table.rows.map(r=>cols.map((_,i)=>{const c=r.c[i];return c==null||c.v==null?'':(c.f&&typeof c.v==='number'&&key!=='Districts'?String(c.v):String(c.v))}))
+    .filter(r=>r.some(x=>x!==''));
+}
+async function refresh(manual){
+  setState('load');
+  try{
+    if(S.demo||!sheetId()){
+      DATA={};for(const k in SCHEMA)DATA[k]=SCHEMA[k].rows.map(r=>r.map(String));
+      setState('demo');
+    }else{
+      const keys=Object.keys(SCHEMA);const res=await Promise.all(keys.map(k=>fetchTab(k).catch(e=>{console.warn(e);return null})));
+      const ok=res.filter(Boolean).length;
+      if(!ok)throw new Error('อ่านข้อมูลไม่ได้ – ตรวจสอบสิทธิ์แชร์/ชื่อแท็บ');
+      keys.forEach((k,i)=>{DATA[k]=res[i]||DATA[k]||SCHEMA[k].rows.map(r=>r.map(String))});
+      setState('live',ok<keys.length?` (${ok}/${keys.length} แท็บ)`:'');
+    }
+    const sig=JSON.stringify(DATA);
+    if(sig!==lastSig){const changed=lastSig!=='';lastSig=sig;render(changed)}
+    if(manual)toast('อัปเดตข้อมูลแล้ว');
+  }catch(e){setState('err',' · '+e.message);console.error(e)}
+}
+function setState(s,x=''){
+  const d=$('#dot'),t=$('#st');d.className='dot '+({live:'live',err:'err',demo:'demo',load:''}[s]);
+  const tm=new Date().toLocaleTimeString('th-TH');
+  t.textContent={live:'LIVE · Google Sheet'+x+' · '+tm,err:'ขัดข้อง'+x,demo:'โหมดสาธิต · '+tm,load:'กำลังอัปเดต…'}[s];
+}
+function schedule(){clearInterval(timer);if(+S.interval>0)timer=setInterval(()=>refresh(),S.interval*1000)}
+const obj=(k,r)=>Object.fromEntries(SCHEMA[k].cols.map((c,i)=>[c,r[i]]));
+const kv=()=>Object.fromEntries((DATA.KPI||[]).map(r=>[r[0],{v:r[1],u:r[2],n:r[3]}]));
+
+/* ============ Helpers ============ */
+const LV={'แดง':['red','t-red'],'ส้ม':['org','t-org'],'เหลือง':['yel','t-yel'],'เขียว':['grn','t-grn'],'ปกติ':['grn','t-grn']};
+const lvTag=v=>`<span class="tag ${(LV[v]||[0,'t-gry'])[1]}">${esc(v)}</span>`;
+const sevCol=v=>({'เสี่ยงสูง':'var(--red)','น้ำเพิ่ม':'var(--org)','ท่วมขัง':'var(--yel)','เฝ้าระวัง':'var(--blu)','ปกติ':'var(--grn)'}[v]||'var(--mu)');
+const sevNum=v=>({'เสี่ยงสูง':4,'น้ำเพิ่ม':3,'ท่วมขัง':2,'เฝ้าระวัง':1,'ปกติ':0}[v]??0);
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ============ Render ============ */
+function render(changed){
+  const K=kv();
+  const lvl=String(K.level?.v||'');const col=lvl>=3?'var(--red)':lvl==2?'var(--org)':lvl==1?'var(--yel)':'var(--grn)';
+  $('#banner').style.setProperty('--lv',col);
+  $('#lvlTxt').textContent='LEVEL '+lvl;$('#lvlName').textContent=K.level_name?.v||'';
+  $('#lvlNote').textContent=K.level_note?.v||'';$('#lvlTime').textContent='อัปเดตล่าสุด '+new Date().toLocaleString('th-TH');
+
+  const defs=[['rain24','ปริมาณฝน 24 ชม.','var(--blu)'],['rain72','คาดการณ์ฝน 72 ชม.','var(--ac2)'],['crit_points','จุดเสี่ยงวิกฤต','var(--red)'],
+   ['roads_cut','ถนนผ่านไม่ได้','var(--org)'],['hosp_watch','โรงพยาบาลที่เฝ้าระวัง','var(--yel)'],['rph_risk','รพ.สต. เสี่ยง','var(--org)'],['vul','ผู้ป่วยเปราะบาง','var(--ac)'],['deaths','เสียชีวิตจากน้ำท่วม','var(--pink)']];
+  const vulSum=(DATA.Vulnerable||[]).reduce((a,r)=>a+num(r[1]),0);
+  $('#kpis').innerHTML=defs.map(([k,l,c])=>{
+    const o=k==='vul'?{v:fmt(vulSum),u:'ราย',n:'ต้องดูแลเป็นพิเศษ'}:(K[k]||{v:'-',u:'',n:''});
+    const ch=changed&&prev[k]!==undefined&&prev[k]!==o.v?' flash':'';prev[k]=o.v;
+    const dm=k==='rain24'&&num(o.v)>S.r24||k==='rain72'&&num(o.v)>S.r72;
+    return `<div class="kpi${ch}" style="--c:${dm?'var(--red)':c}"><div class="l">${l}</div><div class="v mono">${esc(o.v)}<small>${esc(o.u)}</small></div><div class="n">${esc(o.n)}${dm?' · ⚠ เกินเกณฑ์':''}</div></div>`}).join('');
+
+  renderMap();renderDist();renderHosp();renderRph();renderVul();renderRes();renderRoad();renderBcp();renderAlerts(changed);renderFoot();
+}
+function renderMap(){
+  const c=S.map.split(',').map(Number);
+  if(!map){map=L.map('map',{zoomControl:true,attributionControl:false}).setView(c,9);window._tile=L.tileLayer('https://{s}.basemaps.cartocdn.com/{style}/{z}/{x}/{y}{r}.png',{style:S.theme==='dark'?'dark_all':'light_all',maxZoom:18}).addTo(map)}
+  markers.forEach(m=>m.remove());markers=[];
+  (DATA.Districts||[]).forEach(r=>{const d=obj('Districts',r);const la=num(d.lat),ln=num(d.lng);if(!la||!ln)return;
+    const colr=cssv('--'+(LV[d.level]||['grn'])[0]);
+    const ic=L.divIcon({className:'',html:`<div class="mk" style="background:${colr};--c:${colr}">${esc(d.trend)}</div>`,iconSize:[28,28]});
+    markers.push(L.marker([la,ln],{icon:ic}).addTo(map).bindPopup(`<b>อ.${esc(d.district)}</b><br>ระดับ: ${esc(d.level)} ${esc(d.trend)}<br>6 ชม.: ${esc(d.h6)} · 12 ชม.: ${esc(d.h12)} · 24 ชม.: ${esc(d.h24)}`))});
+  (DATA.Hospitals||[]).length&&($('#mapTools').textContent='เลือกจุดเพื่อดูรายละเอียด');
+}
+function renderDist(){
+  const rows=(DATA.Districts||[]).map(r=>obj('Districts',r));
+  $('#tDist').innerHTML='<tr><th>อำเภอ</th><th>ระดับ</th><th>แนวโน้ม</th><th>6 ชม.</th><th>12 ชม.</th><th>24 ชม.</th></tr>'+rows.map(d=>`<tr><td>${esc(d.district)}</td><td>${lvTag(d.level)}</td><td class="mono">${esc(d.trend)}</td>${['h6','h12','h24'].map(h=>`<td style="color:${sevCol(d[h])}">${esc(d[h])}</td>`).join('')}</tr>`).join('');
+  const data={labels:rows.map(d=>d.district),datasets:[['h6','6 ชม.','#38bdf8'],['h12','12 ชม.','#818cf8'],['h24','24 ชม.','#ec4899']].map(([k,l,c])=>({label:l,data:rows.map(d=>sevNum(d[k])),backgroundColor:c,borderRadius:4}))};
+  chart('chDist','bar',data,{scales:{y:{max:4,ticks:{stepSize:1,callback:v=>['ปกติ','เฝ้าระวัง','ท่วมขัง','น้ำเพิ่ม','เสี่ยงสูง'][v]}},x:{ticks:{maxRotation:60}}}});
+}
+function renderHosp(){
+  const L_=['ER','LR','OR','ICU','Dialysis','OPD'];
+  const led=v=>`<span class="led ${v||'N'}" title="${{G:'ปกติ',Y:'จำกัด',R:'หยุด',N:'ไม่มี'}[v]||''}"></span>`;
+  $('#tHosp').innerHTML='<tr><th>โรงพยาบาล</th><th>สถานะ</th>'+L_.map(x=>`<th>${x}</th>`).join('')+'<th>Autonomy (ชม.)</th></tr>'+
+  (DATA.Hospitals||[]).map(r=>{const h=obj('Hospitals',r);const a=num(h.autonomy_hr);const lo=a<S.aut;
+   return `<tr><td>${esc(h.name)} <small style="color:var(--mu)">(${esc(h.tier)})</small></td><td>${lvTag(h.level)}</td>`+L_.map(x=>`<td>${led(h[x])}</td>`).join('')+
+   `<td><span class="tag ${lo?'t-red':'t-grn'} mono">${a}</span></td></tr>`}).join('');
+}
+function renderRph(){const rows=DATA.RPH||[];const cols=['#22c55e','#facc15','#f97316','#ef4444','#64748b'];
+  chart('chRph','doughnut',{labels:rows.map(r=>r[0]),datasets:[{data:rows.map(r=>num(r[1])),backgroundColor:cols,borderWidth:0}]},{cutout:'65%',plugins:{legend:{position:'right'}}})}
+function renderVul(){const rows=DATA.Vulnerable||[];const t=rows.reduce((a,r)=>a+num(r[1]),0);$('#vulTot').textContent='รวม '+fmt(t)+' ราย';
+  chart('chVul','bar',{labels:rows.map(r=>r[0]),datasets:[{data:rows.map(r=>num(r[1])),backgroundColor:'#38bdf8',borderRadius:6}]},{indexAxis:'y',plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:10}}}}})}
+function renderRes(){$('#resList').innerHTML=(DATA.Resources||[]).map(r=>{const o=obj('Resources',r);const c=o.status==='พร้อม'?'t-grn':o.status==='เฝ้าระวัง'?'t-yel':'t-red';
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--grid);font-size:.82rem"><span>${esc(o.name)}</span><span><b class="mono">${esc(o.amount)}</b> ${esc(o.unit)} <span class="tag ${c}">${esc(o.status)}</span></span></div>`}).join('')}
+function renderRoad(){$('#tRoad').innerHTML='<tr><th>เส้นทาง</th><th>ประเภท</th><th>สถานะ</th></tr>'+(DATA.Roads||[]).map(r=>{const o=obj('Roads',r);
+  const c=o.status==='ผ่านได้'?'t-grn':o.status==='เสี่ยง'?'t-yel':'t-red';return `<tr title="${esc(o.note)}"><td>${esc(o.route)}</td><td>${esc(o.type)}</td><td><span class="tag ${c}">${esc(o.status)}</span></td></tr>`}).join('')}
+function renderBcp(){const rows=(DATA.BCP||[]).map(r=>obj('BCP',r));const avg=rows.length?Math.round(rows.reduce((a,b)=>a+num(b.progress),0)/rows.length):0;
+  $('#bcpAvg').textContent='ภาพรวม '+avg+'%';
+  $('#bcp').innerHTML=rows.map(b=>{const p=Math.min(100,num(b.progress));const c=b.status==='เสร็จสิ้น'?'t-grn':b.status==='ดำเนินการ'?'t-blu':'t-gry';
+   return `<div class="bi"><div class="h"><span class="no mono">${esc(b.no)}</span><span style="flex:1">${esc(b.title)}</span><span class="tag ${c}">${esc(b.status)}</span><b class="mono">${p}%</b></div>
+   <div class="m">ผู้รับผิดชอบ: ${esc(b.owner)} · ${esc(b.note)}</div><div class="bar" style="margin-left:34px"><b style="width:${p}%;${p<S.bcp?'background:linear-gradient(90deg,var(--org),var(--red))':''}"></b></div></div>`}).join('')}
+function renderFoot(){const h=DATA.Hospitals||[],b=DATA.BCP||[];const done=b.filter(r=>r[2]==='เสร็จสิ้น').length;
+  $('#foot').innerHTML=`<span>🎯 เป้าหมายก่อนฤดูน้ำท่วม จ.นราธิวาส</span><span><b>${h.length}</b> รพ. มีข้อมูลครบ</span><span><b>${(DATA.Districts||[]).length}</b> อำเภอติดตาม</span><span><b>${done}/${b.length}</b> ข้อ BCP เสร็จสิ้น</span><span>Zero Preventable Death</span>`}
+function renderAlerts(changed){
+  const A=[];
+  const K=kv();
+  if(num(K.rain24?.v)>S.r24)A.push(['red','ฝนสะสม 24 ชม. เกินเกณฑ์',`${K.rain24.v} มม. > ${S.r24} มม.`]);
+  if(num(K.rain72?.v)>S.r72)A.push(['org','คาดการณ์ฝน 72 ชม. เกินเกณฑ์',`${K.rain72.v} มม. > ${S.r72} มม.`]);
+  (DATA.Districts||[]).map(r=>obj('Districts',r)).filter(d=>d.level==='แดง').forEach(d=>A.push(['red','อ.'+d.district+' ระดับแดง','แนวโน้ม '+d.trend+' · 24 ชม.: '+d.h24]));
+  (DATA.Hospitals||[]).map(r=>obj('Hospitals',r)).forEach(h=>{
+    if(num(h.autonomy_hr)<S.aut)A.push(['org','รพ.'+h.name+' Autonomy ต่ำ',h.autonomy_hr+' ชม. < '+S.aut]);
+    ['ER','LR','OR','ICU'].filter(x=>h[x]==='R').forEach(x=>A.push(['red','รพ.'+h.name+' '+x+' หยุดให้บริการ','ตรวจสอบแผนส่งต่อ']))});
+  (DATA.Roads||[]).map(r=>obj('Roads',r)).filter(r=>r.status==='ตัดขาด').forEach(r=>A.push(['org','ถนนถูกตัดขาด: '+r.route,r.note]));
+  (DATA.Resources||[]).map(r=>obj('Resources',r)).filter(r=>r.status!=='พร้อม').forEach(r=>A.push(['yel','ทรัพยากร '+r.name,r.status+' ('+r.amount+' '+r.unit+')']));
+  (DATA.BCP||[]).map(r=>obj('BCP',r)).filter(b=>num(b.progress)<S.bcp).forEach(b=>A.push(['yel','BCP ข้อ '+b.no+' ล่าช้า',b.progress+'% < '+S.bcp+'%']));
+  $('#alCnt').textContent=A.length+' รายการ';
+  $('#alerts').innerHTML=A.map(([c,t,d])=>`<div class="al" style="--c:var(--${c})"><b>${esc(t)}</b><br><span style="color:var(--mu)">${esc(d)}</span></div>`).join('')||'<div class="hint">ไม่มีการแจ้งเตือน ✓</div>';
+  const crit=A.filter(a=>a[0]==='red').length;
+  if(changed&&crit>(prev._crit||0)){if(S.sound)beep();if(S.notify&&Notification?.permission==='granted')new Notification('BCP นราธิวาส: มีแจ้งเตือนวิกฤตใหม่');toast('🚨 มีแจ้งเตือนวิกฤตใหม่')}
+  prev._crit=crit;
+}
+function beep(){try{const a=new AudioContext(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='square';o.frequency.value=880;g.gain.value=.1;o.start();o.stop(a.currentTime+.4)}catch(e){}}
+function chart(id,type,data,opt={}){
+  const tc=cssv('--mu'),gc=cssv('--grid');
+  charts[id]?.destroy();
+  const sc={};if(type!=='doughnut'){for(const a of ['x','y']){sc[a]={grid:{color:gc},ticks:{color:tc},...(opt.scales?.[a]||{}),ticks:{color:tc,...(opt.scales?.[a]?.ticks||{})}}}}
+  charts[id]=new Chart($('#'+id),{type,data,options:{responsive:true,maintainAspectRatio:false,animation:S.anim?{duration:900}:false,indexAxis:opt.indexAxis,cutout:opt.cutout,
+    plugins:{legend:{display:opt.plugins?.legend?.display!==false,position:opt.plugins?.legend?.position||'bottom',labels:{color:tc,boxWidth:10}}},scales:type==='doughnut'?{}:sc}});
+}
+
+/* ============ Settings UI ============ */
+function openDr(id){$('#ov').classList.add('on');$(id).classList.add('on')}
+function closeDr(){$('#ov').classList.remove('on');$$('.dr').forEach(d=>d.classList.remove('on'))}
+function fillSettings(){
+  $('#sSheet').value=S.sheet;$('#sDemo').checked=S.demo;$('#sInt').value=S.interval;$('#sScript').value=S.script;$('#sToken').value=S.token;
+  $('#sTabs').innerHTML=Object.keys(SCHEMA).map(k=>`<div><label>${SCHEMA[k].label}</label><input data-tab="${k}" value="${esc(S.tabs[k])}"></div>`).join('');
+  $('#sR24').value=S.r24;$('#sR72').value=S.r72;$('#sAut').value=S.aut;$('#sBcp').value=S.bcp;$('#sSnd').checked=S.sound;$('#sNote').checked=S.notify;
+  $('#sTitle').value=S.title;$('#sTheme').value=S.theme;$('#sAcc').value=S.acc;$('#sMap').value=S.map;$('#sAnim').checked=S.anim;
+}
+function applyLook(){
+  document.documentElement.dataset.theme=S.theme;document.documentElement.style.setProperty('--ac',S.acc);
+  $('#orgTitle').textContent=S.title;document.title=S.title;
+  if(window._tile)window._tile.setUrl(`https://{s}.basemaps.cartocdn.com/${S.theme==='dark'?'dark_all':'light_all'}/{z}/{x}/{y}{r}.png`);
+  document.body.style.setProperty('--anim',S.anim?1:0);
+  $('#bEdit').title=S.script&&S.token?'':'ต้องตั้งค่า Apps Script ก่อนจึงจะบันทึกได้';
+}
+function collect(){
+  S.sheet=$('#sSheet').value.trim();S.demo=$('#sDemo').checked;S.interval=+$('#sInt').value;S.script=$('#sScript').value.trim();S.token=$('#sToken').value;
+  $$('[data-tab]').forEach(i=>S.tabs[i.dataset.tab]=i.value.trim()||i.dataset.tab);
+  S.r24=num($('#sR24').value);S.r72=num($('#sR72').value);S.aut=num($('#sAut').value);S.bcp=num($('#sBcp').value);S.sound=$('#sSnd').checked;S.notify=$('#sNote').checked;
+  S.title=$('#sTitle').value;S.theme=$('#sTheme').value;S.acc=$('#sAcc').value;S.map=$('#sMap').value||DEF.map;S.anim=$('#sAnim').checked;
+}
+/* ============ Editor (เขียนกลับ Google Sheet) ============ */
+const canWrite=()=>!!(S.script&&S.token);
+function openEditor(){
+  $('#edTabs').innerHTML=Object.keys(SCHEMA).map(k=>`<button data-et="${k}">${SCHEMA[k].label}</button>`).join('');
+  $$('[data-et]').forEach(b=>b.onclick=()=>loadEd(b.dataset.et));loadEd(edTab);openDr('#drEd');
+}
+function loadEd(k){edTab=k;edRows=(DATA[k]||[]).map(r=>[...r]);$$('[data-et]').forEach(b=>b.classList.toggle('on',b.dataset.et===k));drawEd();
+  $('#edState').textContent=canWrite()?'🔓 ปลดล็อกแล้ว':'🔒 อ่านอย่างเดียว';
+  $('#edHint').textContent=canWrite()?'แก้ไขแล้วกด "บันทึกลง Google Sheet" – ระบบจะเขียนทับทั้งแท็บ "'+S.tabs[k]+'"':'ใส่ Apps Script URL + รหัสในเมนูตั้งค่าเพื่อบันทึกกลับ (ตอนนี้แก้ได้เฉพาะในหน้านี้/ส่งออก CSV)'}
+function drawEd(){const cols=SCHEMA[edTab].cols;
+  $('#edTbl').innerHTML='<tr><th>#</th>'+cols.map(c=>`<th>${c}</th>`).join('')+'<th></th></tr>'+edRows.map((r,i)=>`<tr><td class="mono">${i+1}</td>${cols.map((_,j)=>`<td><input data-r="${i}" data-c="${j}" value="${esc(r[j]??'')}"></td>`).join('')}<td><button data-del="${i}">🗑</button></td></tr>`).join('');
+  $$('#edTbl input').forEach(i=>i.oninput=()=>{edRows[i.dataset.r][i.dataset.c]=i.value});
+  $$('[data-del]').forEach(b=>b.onclick=()=>{edRows.splice(+b.dataset.del,1);drawEd()})}
+async function edSave(){
+  if(!canWrite())return toast('🔒 ยังไม่ได้ตั้งค่า Apps Script');
+  DATA[edTab]=edRows.map(r=>[...r]);
+  if(S.demo){lastSig='';render(true);return toast('โหมดสาธิต: อัปเดตเฉพาะหน้านี้ (ปิดโหมดสาธิตเพื่อเขียนลง Sheet)')}
+  try{
+    const body=JSON.stringify({token:S.token,action:'replace',sheet:S.tabs[edTab],header:SCHEMA[edTab].cols,rows:edRows});
+    await fetch(S.script,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body});
+    toast('✓ ส่งข้อมูลไปยัง Google Sheet แล้ว');setTimeout(()=>refresh(),1800);
+  }catch(e){toast('บันทึกไม่สำเร็จ: '+e.message)}
+}
+const toCsv=(cols,rows)=>'﻿'+[cols,...rows].map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+function dl(name,txt,type='text/csv'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:type+';charset=utf-8'}));a.download=name;a.click()}
+const GS=`/** BCP Narathiwat – Apps Script backend (วางใน Extensions > Apps Script) */
+const SECRET = 'เปลี่ยนรหัสนี้';          // ต้องตรงกับช่อง "รหัสผ่านสำหรับแก้ไข" ในเว็บ
+
+function doPost(e) {
+  try {
+    const b = JSON.parse(e.postData.contents);
+    if (b.token !== SECRET) return out({ok:false, error:'unauthorized'});
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sh = ss.getSheetByName(b.sheet) || ss.insertSheet(b.sheet);
+    if (b.action === 'replace') {
+      sh.clearContents();
+      const all = [b.header].concat(b.rows);
+      sh.getRange(1,1,all.length,b.header.length).setValues(all);
+      sh.setFrozenRows(1);
+    } else if (b.action === 'append') {
+      sh.appendRow(b.row);
+    }
+    return out({ok:true, rows:b.rows ? b.rows.length : 1});
+  } catch (err) { return out({ok:false, error:String(err)}); }
+}
+function doGet() { return out({ok:true, service:'BCP Narathiwat'}); }
+function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }`;
+
+/* ============ Events ============ */
+$('#bSet').onclick=()=>{fillSettings();openDr('#drSet')};
+$('#bEdit').onclick=openEditor;
+$('#bRef').onclick=()=>refresh(true);
+$('#ov').onclick=closeDr;$$('[data-close]').forEach(b=>b.onclick=closeDr);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDr();if(e.key==='r'&&e.altKey)refresh(true)});
+$('#bSave').onclick=async()=>{collect();if(S.notify&&'Notification' in window)await Notification.requestPermission();save();applyLook();schedule();closeDr();lastSig='';
+  if(map){map.setView(S.map.split(',').map(Number))}refresh(true)};
+$('#bTest').onclick=async()=>{collect();if(!sheetId())return toast('กรุณาใส่ Sheet URL');
+  try{const r=await fetchTab('KPI');toast('✓ เชื่อมต่อสำเร็จ พบ '+r.length+' แถวในแท็บ '+S.tabs.KPI)}catch(e){toast('✗ '+e.message)}};
+$('#bCode').onclick=()=>{$('#codeTxt').textContent=GS;openDr('#drCode')};
+$('#bCopy').onclick=()=>{navigator.clipboard.writeText(GS);toast('คัดลอกแล้ว')};
+$('#bTpl').onclick=()=>Object.keys(SCHEMA).forEach((k,i)=>setTimeout(()=>dl(k+'.csv',toCsv(SCHEMA[k].cols,SCHEMA[k].rows)),i*250));
+$('#bExp').onclick=()=>dl('bcp-settings.json',JSON.stringify(S,null,2),'application/json');
+$('#bImp').onclick=()=>$('#fImp').click();
+$('#fImp').onchange=async e=>{try{S={...DEF,...JSON.parse(await e.target.files[0].text())};save();fillSettings();toast('นำเข้าแล้ว กด "บันทึก" เพื่อใช้งาน')}catch(x){toast('ไฟล์ไม่ถูกต้อง')}};
+$('#bRst').onclick=()=>{if(confirm('รีเซ็ตการตั้งค่าทั้งหมด?')){localStorage.removeItem(LS);location.reload()}};
+$('#edAdd').onclick=()=>{edRows.push(SCHEMA[edTab].cols.map(()=>''));drawEd()};
+$('#edCsv').onclick=()=>dl(edTab+'.csv',toCsv(SCHEMA[edTab].cols,edRows));
+$('#edSave').onclick=edSave;
+setInterval(()=>$('#clock').textContent=new Date().toLocaleTimeString('th-TH'),1000);
+
+/* ============ Boot ============ */
+applyLook();schedule();refresh();
+</script>
+</body>
+</html>
