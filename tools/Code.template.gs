@@ -7,7 +7,7 @@
  *  อย่าแก้ส่วน DB ด้วยมือ — แก้ที่ index.html แล้วรัน: node tools/build.js
  *
  *  ความสามารถ
- *   1. setupDatabase()  สร้าง/ซ่อมแซมฐานข้อมูล 16 แท็บ พร้อมหัวตาราง รายการเลือก (Dropdown) รูปแบบข้อมูล
+ *   1. setupDatabase()  สร้าง/ซ่อมแซมฐานข้อมูล 17 แท็บ พร้อมหัวตาราง รายการเลือก (Dropdown) รูปแบบข้อมูล
  *   2. Web App API      ping / whoami / readAll / read / create / update / delete / replace / setup / setSharing
  *   3. สิทธิ์ 3 ระดับ     ADMIN (Full) · EDITOR (CRUD) · VIEWER (อ่าน + ปิดบังข้อมูลส่วนบุคคล)
  *   4. ตรวจสอบข้อมูลฝั่งเซิร์ฟเวอร์ (ชนิดข้อมูล, ค่าที่เลือกได้, ช่วงตัวเลข, ค่าซ้ำ) + ล็อกกันเขียนชนกัน

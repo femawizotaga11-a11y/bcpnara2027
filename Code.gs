@@ -7,7 +7,7 @@
  *  อย่าแก้ส่วน DB ด้วยมือ — แก้ที่ index.html แล้วรัน: node tools/build.js
  *
  *  ความสามารถ
- *   1. setupDatabase()  สร้าง/ซ่อมแซมฐานข้อมูล 16 แท็บ พร้อมหัวตาราง รายการเลือก (Dropdown) รูปแบบข้อมูล
+ *   1. setupDatabase()  สร้าง/ซ่อมแซมฐานข้อมูล 17 แท็บ พร้อมหัวตาราง รายการเลือก (Dropdown) รูปแบบข้อมูล
  *   2. Web App API      ping / whoami / readAll / read / create / update / delete / replace / setup / setSharing
  *   3. สิทธิ์ 3 ระดับ     ADMIN (Full) · EDITOR (CRUD) · VIEWER (อ่าน + ปิดบังข้อมูลส่วนบุคคล)
  *   4. ตรวจสอบข้อมูลฝั่งเซิร์ฟเวอร์ (ชนิดข้อมูล, ค่าที่เลือกได้, ช่วงตัวเลข, ค่าซ้ำ) + ล็อกกันเขียนชนกัน
@@ -28,7 +28,7 @@
 
 const VERSION = '1.1.0';
 /** รหัสโครงสร้างฐานข้อมูล — สร้างอัตโนมัติ; Dashboard เทียบค่านี้เพื่อเตือนเมื่อ Code.gs ล้าสมัย */
-const SCHEMA_VERSION = '1eb6cni';
+const SCHEMA_VERSION = '11s12ib';
 
 /** รหัสผ่านแต่ละระดับ — แก้ก่อนใช้งานจริง (หรือเก็บใน Project Settings → Script properties: TOKEN_ADMIN / TOKEN_EDITOR / TOKEN_VIEWER) */
 const TOKENS = {
@@ -42,7 +42,7 @@ const MAX_TEXT = 2000;
 
 /** โครงสร้างฐานข้อมูล (สร้างโดย tools/build.js) */
 const DB = {
-  order: ["Config","Rainfall","Districts","Roads","Vulnerable","EMS","Referral","Comms","Escalation","Hospitals","RPH","Resources","Logistics","Staff","BCP","Log"],
+  order: ["Config","Rainfall","Districts","GeoLayers","Roads","Vulnerable","EMS","Referral","Comms","Escalation","Hospitals","RPH","Resources","Logistics","Staff","BCP","Log"],
   tabs: {
     Config: { label: "ค่าสถานการณ์จังหวัด", prefix: "CF", cols: [
       {"k":"id","l":"รหัส","t":"id"},
@@ -73,6 +73,19 @@ const DB = {
       {"k":"h12","l":"ผลกระทบ 12 ชม.","t":"sel","o":["เสี่ยงสูง","น้ำเพิ่ม","ท่วมขัง","เฝ้าระวัง","ปกติ"]},
       {"k":"h24","l":"ผลกระทบ 24 ชม.","t":"sel","o":["เสี่ยงสูง","น้ำเพิ่ม","ท่วมขัง","เฝ้าระวัง","ปกติ"]},
       {"k":"note","l":"หมายเหตุ","t":"area"},
+      {"k":"updated_at","l":"แก้ไขล่าสุด","t":"ts"},
+      {"k":"updated_by","l":"แก้ไขโดย","t":"ts"}
+    ] },
+    GeoLayers: { label: "ชั้นข้อมูลภูมิสารสนเทศ (GISTDA / ปภ. / อื่นๆ)", prefix: "GL", cols: [
+      {"k":"id","l":"รหัส","t":"id"},
+      {"k":"name","l":"ชื่อชั้นข้อมูล","t":"text","req":1},
+      {"k":"provider","l":"หน่วยงานเจ้าของข้อมูล","t":"sel","o":["GISTDA","ปภ.","ThaiWater/สนช.","กรมชลประทาน","อื่นๆ"],"req":1},
+      {"k":"type","l":"ชนิดบริการ","t":"sel","o":["ArcGIS MapServer","WMS","XYZ Tile","GeoJSON"],"req":1},
+      {"k":"url","l":"URL บริการ","t":"text","req":1},
+      {"k":"layers","l":"เลเยอร์ (ArcGIS: เลขเลเยอร์ เช่น 0,1 · WMS: ชื่อเลเยอร์)","t":"text"},
+      {"k":"opacity","l":"ความโปร่งใส (0-1)","t":"num","min":0,"max":1},
+      {"k":"visible","l":"เปิดแสดงตอนเริ่ม","t":"sel","o":["ใช่","ไม่"]},
+      {"k":"note","l":"หมายเหตุ/ที่มา","t":"area"},
       {"k":"updated_at","l":"แก้ไขล่าสุด","t":"ts"},
       {"k":"updated_by","l":"แก้ไขโดย","t":"ts"}
     ] },

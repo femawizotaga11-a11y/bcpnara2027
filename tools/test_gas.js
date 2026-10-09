@@ -62,9 +62,9 @@ ok("ADMIN = EDITOR = 'admin' ตามที่ตั้งใน Code.gs: ร�
 props.TOKEN_ADMIN = 'A1'; props.TOKEN_EDITOR = 'E1'; props.TOKEN_VIEWER = 'V1';
 ok('ping ใช้ได้โดยไม่ต้องมี token', () => assert.strictEqual(get({ action: 'ping' }).ok, true));
 ok('whoami คืนบทบาทถูกต้อง', () => { assert.strictEqual(get({ action: 'whoami', token: 'A1' }).role, 'admin'); assert.strictEqual(get({ action: 'whoami', token: 'x' }).role, 'none'); });
-ok('setup สร้างครบ 16 แท็บ + seed BCP 9 ข้อ + Config 5 คีย์', () => {
+ok('setup สร้างครบ 17 แท็บ + seed BCP 9 ข้อ + Config 5 คีย์', () => {
   const r = post({ action: 'setup', token: 'A1' }); assert.ok(r.ok, r.error);
-  assert.strictEqual(Object.keys(sheets).length, 16);
+  assert.strictEqual(Object.keys(sheets).length, 17);
   assert.strictEqual(sheets.BCP.getLastRow(), 10); assert.strictEqual(sheets.Config.getLastRow(), 6);
   assert.deepStrictEqual(sheets.Hospitals.d[0].slice(0, 3), ['id', 'name', 'tier']);
 });
@@ -135,7 +135,7 @@ ok('ปฏิเสธแท็บ/คำสั่งที่ไม่รู้
   assert.ok(/ไม่รู้จักคำสั่ง/.test(post({ action: 'dropAll', token: 'A1' }).error));
   assert.ok(/JSON/.test(JSON.parse(api.doPost({ postData: { contents: '{bad' } }).getContent()).error));
 });
-ok('readAll คืนครบ 16 แท็บ + meta', () => { const r = get({ action: 'readAll', token: 'V1' }); assert.strictEqual(Object.keys(r.data).length, 16); assert.strictEqual(r.meta.name, 'TestBook'); });
+ok('readAll คืนครบ 17 แท็บ + meta', () => { const r = get({ action: 'readAll', token: 'V1' }); assert.strictEqual(Object.keys(r.data).length, 17); assert.strictEqual(r.meta.name, 'TestBook'); });
 ok('SCHEMA_VERSION ตรงกับที่ Dashboard คำนวณ (index.html)', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   const a = html.indexOf('/* SCHEMA_DEF_START'), b = html.indexOf('/* SCHEMA_DEF_END */');
