@@ -251,14 +251,14 @@ const SCHEMA={
    ['rain24','156.4','มม.','+32% จากสัปดาห์ก่อน'],['rain72','312.6','มม.','เสี่ยงเพิ่มขึ้น'],['crit_points','6','จุด','น้ำท่วมซ้ำซาก / สะพาน'],
    ['roads_cut','11','จุด','หลัก 4 / สำรอง 7'],['hosp_watch','5','แห่ง','จาก 13 แห่ง (ขีดความสามารถลดลง)'],['rph_risk','18','แห่ง','จากทั้งหมด 111 แห่ง'],
    ['deaths','0','ราย','Zero Preventable Death']]},
- Districts:{label:'อำเภอ',cols:['district','level','trend','h6','h12','h24','lat','lng'],
-  rows:[['สุไหงโก-ลก','แดง','↑↑','เสี่ยงสูง','เสี่ยงสูง','น้ำเพิ่ม','6.030','101.970'],['ตากใบ','แดง','↑↑','เสี่ยงสูง','เสี่ยงสูง','น้ำเพิ่ม','6.256','102.054'],
-   ['ยี่งอ','ส้ม','↑','น้ำเพิ่ม','น้ำเพิ่ม','ท่วมขัง','6.390','101.790'],['สุไหงปาดี','ส้ม','↑','น้ำเพิ่ม','ท่วมขัง','ท่วมขัง','6.140','101.800'],
-   ['เมืองนราธิวาส','ส้ม','↑','ท่วมขัง','ท่วมขัง','ท่วมขัง','6.426','101.823'],['ระแงะ','ส้ม','↑','ท่วมขัง','ท่วมขัง','น้ำเพิ่ม','6.300','101.680'],
-   ['รือเสาะ','เหลือง','→','ท่วมขัง','ท่วมขัง','ท่วมขัง','6.350','101.500'],['เจาะไอร้อง','เหลือง','→','เฝ้าระวัง','เฝ้าระวัง','ท่วมขัง','6.250','101.770'],
-   ['จะแนะ','ปกติ','↑','เฝ้าระวัง','เฝ้าระวัง','ท่วมขัง','6.200','101.670'],['ศรีสาคร','เหลือง','→','ปกติ','เฝ้าระวัง','ท่วมขัง','6.110','101.520'],
-   ['แว้ง','เขียว','→','ปกติ','เฝ้าระวัง','ท่วมขัง','5.820','101.820'],['สุคิริน','เขียว','→','ปกติ','ปกติ','เฝ้าระวัง','5.970','101.700'],
-   ['บาเจาะ','เขียว','→','ปกติ','ปกติ','เฝ้าระวัง','6.520','101.960']]},
+ Districts:{label:'อำเภอ',cols:['district','level','trend','h6','h12','h24','vulnerable'],
+  rows:[['สุไหงโก-ลก','แดง','↑↑','เสี่ยงสูง','เสี่ยงสูง','น้ำเพิ่ม','140'],['ตากใบ','แดง','↑↑','เสี่ยงสูง','เสี่ยงสูง','น้ำเพิ่ม','150'],
+   ['ยี่งอ','ส้ม','↑','น้ำเพิ่ม','น้ำเพิ่ม','ท่วมขัง','70'],['สุไหงปาดี','ส้ม','↑','น้ำเพิ่ม','ท่วมขัง','ท่วมขัง','110'],
+   ['เมืองนราธิวาส','ส้ม','↑','ท่วมขัง','ท่วมขัง','ท่วมขัง','230'],['ระแงะ','ส้ม','↑','ท่วมขัง','ท่วมขัง','น้ำเพิ่ม','90'],
+   ['รือเสาะ','เหลือง','→','ท่วมขัง','ท่วมขัง','ท่วมขัง','60'],['เจาะไอร้อง','เหลือง','→','เฝ้าระวัง','เฝ้าระวัง','ท่วมขัง','50'],
+   ['จะแนะ','ปกติ','↑','เฝ้าระวัง','เฝ้าระวัง','ท่วมขัง','45'],['ศรีสาคร','เหลือง','→','ปกติ','เฝ้าระวัง','ท่วมขัง','70'],
+   ['แว้ง','เขียว','→','ปกติ','เฝ้าระวัง','ท่วมขัง','60'],['สุคิริน','เขียว','→','ปกติ','ปกติ','เฝ้าระวัง','80'],
+   ['บาเจาะ','เขียว','→','ปกติ','ปกติ','เฝ้าระวัง','129']]},
  Hospitals:{label:'โรงพยาบาล',cols:['name','tier','level','ER','LR','OR','ICU','Dialysis','OPD','autonomy_hr'],
   rows:[['นราธิวาส','A+','ส้ม','G','G','Y','G','N','R','48'],['สุไหงโก-ลก','A+','แดง','G','G','R','G','N','R','24'],['ระแงะ','S+','ส้ม','G','G','Y','R','N','R','36'],
    ['ตากใบ','S+','ส้ม','G','G','Y','N','N','R','36'],['สุคิริน','M','เหลือง','G','G','G','N','N','Y','72'],['เจาะไอร้อง','M','เหลือง','G','G','Y','N','N','R','72'],
@@ -291,7 +291,7 @@ const DEF={sheet:'',demo:true,interval:30,script:'',token:'',tabs:{},r24:150,r72
 Object.keys(SCHEMA).forEach(k=>DEF.tabs[k]=k);
 const LS='bcpnara.settings.v1';
 let S=load();
-let DATA={},prev={},timer=null,map,markers=[],charts={},edTab='KPI',edRows=[],lastSig='';
+let DATA={},prev={},timer=null,map,charts={},edTab='KPI',edRows=[],lastSig='';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 function load(){try{return {...DEF,...JSON.parse(localStorage.getItem(LS)||'{}'),tabs:{...DEF.tabs,...(JSON.parse(localStorage.getItem(LS)||'{}').tabs||{})}}}catch(e){return {...DEF}}}
 function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
@@ -364,15 +364,60 @@ function render(changed){
 
   renderMap();renderDist();renderHosp();renderRph();renderVul();renderRes();renderRoad();renderBcp();renderAlerts(changed);renderFoot();
 }
-function renderMap(){
+/* ---- แผนที่: ขอบเขต geoBoundaries + OpenGISData-Thailand · หน่วยบริการ OSM · ภาพดาวเทียม Esri · สีเขียว (เข้ม = มาก) ---- */
+const GREEN=['#dcfce7','#86efac','#34d399','#15803d','#052e16'];
+const METRICS={risk:['ระดับความเสี่ยง (แดง=สูงสุด)',d=>({'แดง':4,'ส้ม':3,'เหลือง':2,'เขียว':1,'ปกติ':0}[d.level]??0),4],
+  h6:['ผลกระทบคาดการณ์ 6 ชม.',d=>sevNum(d.h6),4],h12:['ผลกระทบคาดการณ์ 12 ชม.',d=>sevNum(d.h12),4],h24:['ผลกระทบคาดการณ์ 24 ชม.',d=>sevNum(d.h24),4],
+  vul:['จำนวนผู้ป่วยเปราะบาง (ราย)',d=>num(d.vulnerable),0]};
+let GEO=null,FAC=null,mapLayers={},mapMetric='risk',legend;
+async function loadGeo(){
+  try{[GEO,FAC]=await Promise.all([fetch('narathiwat_districts.geojson').then(r=>r.json()),fetch('facilities_osm.json').then(r=>r.json())])}
+  catch(e){console.warn(e);toast('โหลดไฟล์แผนที่ไม่ได้ (ต้องเปิดผ่านเว็บเซิร์ฟเวอร์/GitHub Pages ไม่ใช่ file://)')}
+}
+function initMap(){
   const c=S.map.split(',').map(Number);
-  if(!map){map=L.map('map',{zoomControl:true,attributionControl:false}).setView(c,9);window._tile=L.tileLayer('https://{s}.basemaps.cartocdn.com/{style}/{z}/{x}/{y}{r}.png',{style:S.theme==='dark'?'dark_all':'light_all',maxZoom:18}).addTo(map)}
-  markers.forEach(m=>m.remove());markers=[];
-  (DATA.Districts||[]).forEach(r=>{const d=obj('Districts',r);const la=num(d.lat),ln=num(d.lng);if(!la||!ln)return;
-    const colr=cssv('--'+(LV[d.level]||['grn'])[0]);
-    const ic=L.divIcon({className:'',html:`<div class="mk" style="background:${colr};--c:${colr}">${esc(d.trend)}</div>`,iconSize:[28,28]});
-    markers.push(L.marker([la,ln],{icon:ic}).addTo(map).bindPopup(`<b>อ.${esc(d.district)}</b><br>ระดับ: ${esc(d.level)} ${esc(d.trend)}<br>6 ชม.: ${esc(d.h6)} · 12 ชม.: ${esc(d.h12)} · 24 ชม.: ${esc(d.h24)}`))});
-  (DATA.Hospitals||[]).length&&($('#mapTools').textContent='เลือกจุดเพื่อดูรายละเอียด');
+  map=L.map('map',{zoomControl:true,attributionControl:true}).setView(c,9);
+  const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'Imagery © Esri, Maxar, Earthstar Geographics'});
+  const lab=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,opacity:.9});
+  const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'});
+  sat.addTo(map);lab.addTo(map);
+  mapLayers.dist=L.layerGroup().addTo(map);mapLayers.fac=L.layerGroup().addTo(map);
+  L.control.layers({'ภาพดาวเทียม (Esri)':sat,'แผนที่ถนน (OSM)':osm},{'ชื่อสถานที่':lab,'ขอบเขตอำเภอ':mapLayers.dist,'หน่วยบริการ (OSM)':mapLayers.fac},{collapsed:true}).addTo(map);
+  L.control.attribution({prefix:false}).addTo(map).addAttribution('ขอบเขต: geoBoundaries (CC BY 3.0 IGO) + OpenGISData-Thailand · หน่วยบริการ: © OpenStreetMap contributors (ODbL)');
+  legend=L.control({position:'bottomleft'});
+  legend.onAdd=()=>{const d=L.DomUtil.create('div');d.id='lg';d.style.cssText='background:rgba(5,11,26,.82);color:#e8f0ff;padding:8px 11px;border-radius:10px;font-size:.72rem;backdrop-filter:blur(6px)';return d};
+  legend.addTo(map);
+  $('#mapTools').innerHTML='<select id="mapMetric" style="width:auto;padding:3px 8px;font-size:.72rem">'+Object.entries(METRICS).map(([k,m])=>`<option value="${k}">${m[0]}</option>`).join('')+'</select>';
+  $('#mapMetric').onchange=e=>{mapMetric=e.target.value;renderMap()};
+}
+function renderMap(){
+  if(!map)initMap();
+  if(!GEO)return loadGeo().then(()=>GEO&&renderMap());
+  const [title,fn,fixedMax]=METRICS[mapMetric];
+  const byName={};(DATA.Districts||[]).forEach(r=>{const d=obj('Districts',r);byName[String(d.district).replace(/^อ\.\s*/,'')]=d});
+  const vals=GEO.features.map(f=>byName[f.properties.name]?fn(byName[f.properties.name]):0);
+  const max=fixedMax||Math.max(1,...vals);
+  const cls=v=>Math.min(4,Math.floor((v/max)*5-1e-9));
+  mapLayers.dist.clearLayers();
+  GEO.features.forEach((f,i)=>{const d=byName[f.properties.name];const v=vals[i];
+    const l=L.geoJSON(f,{style:{fillColor:GREEN[Math.max(0,cls(v))],fillOpacity:d?.78:.25,color:'#fff',weight:1.6,opacity:.95},
+      onEachFeature:(_,ly)=>{
+        ly.bindTooltip(`<b>${esc(f.properties.name)}</b>${d?'<br>'+(mapMetric==='vul'?fmt(v)+' ราย':esc(title.split(' (')[0])+': '+v):''}`,{sticky:true});
+        ly.bindPopup(d?`<b>อ.${esc(d.district)}</b> <small>(${esc(f.properties.name_en)} · ${f.properties.area_sqkm} ตร.กม.)</small><br>ระดับ: ${esc(d.level)} ${esc(d.trend)}<br>6 ชม.: ${esc(d.h6)} · 12 ชม.: ${esc(d.h12)} · 24 ชม.: ${esc(d.h24)}<br>ผู้ป่วยเปราะบาง: ${fmt(num(d.vulnerable))} ราย`:`<b>อ.${esc(f.properties.name)}</b><br>ไม่พบข้อมูลในชีต`);
+        ly.on({mouseover:e=>e.target.setStyle({weight:3,color:'#facc15'}),mouseout:e=>e.target.setStyle({weight:1.6,color:'#fff'})})}});
+    l.addTo(mapLayers.dist)});
+  // หน่วยบริการจาก OSM (จับคู่สถานะกับแท็บ Hospitals ด้วยชื่อ)
+  mapLayers.fac.clearLayers();
+  const hosp=(DATA.Hospitals||[]).map(r=>obj('Hospitals',r));
+  const norm=s=>String(s).replace(/โรงพยาบาล|รพ\.|\(.*?\)|\s|[​-]/g,'');
+  (FAC?.items||[]).forEach(p=>{
+    const h=hosp.find(h=>norm(p.name)&&(norm(p.name).includes(norm(h.name))||norm(h.name).includes(norm(p.name))))||null;
+    const ic=p.type==='hospital'?'H':p.type==='rph'?'+':'c';
+    const m=L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',iconSize:[22,22],html:`<div style="width:22px;height:22px;border-radius:6px;background:#fff;color:#0b5ed7;border:2px solid ${h&&h.level==='แดง'?'#ef4444':'#0b5ed7'};display:grid;place-items:center;font:700 12px Prompt,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.5)">${ic}</div>`})});
+    m.bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.name_en)}<br>อ.${esc(p.district)}${h?`<br>สถานะ: ${esc(h.level)} · Autonomy ${esc(h.autonomy_hr)} ชม.`:''}<br><small>OSM ${esc(p.id)}</small>`).addTo(mapLayers.fac)});
+  // legend
+  const steps=fixedMax?['ต่ำ','','','','สูง']:[0,1,2,3,4].map(i=>Math.round(max*i/5)+(i<4?'':'+'));
+  $('#lg').innerHTML=`<b>${esc(title)}</b><div style="display:flex;margin:5px 0 2px">${GREEN.map(c=>`<span style="flex:1;height:10px;background:${c}"></span>`).join('')}</div><div style="display:flex;justify-content:space-between;gap:12px"><span>น้อย</span><span>มาก</span></div><div style="margin-top:4px">▣ H รพ. · + รพ.สต. · c คลินิก (OSM)</div>`;
 }
 function renderDist(){
   const rows=(DATA.Districts||[]).map(r=>obj('Districts',r));
@@ -442,7 +487,6 @@ function fillSettings(){
 function applyLook(){
   document.documentElement.dataset.theme=S.theme;document.documentElement.style.setProperty('--ac',S.acc);
   $('#orgTitle').textContent=S.title;document.title=S.title;
-  if(window._tile)window._tile.setUrl(`https://{s}.basemaps.cartocdn.com/${S.theme==='dark'?'dark_all':'light_all'}/{z}/{x}/{y}{r}.png`);
   document.body.style.setProperty('--anim',S.anim?1:0);
   $('#bEdit').title=S.script&&S.token?'':'ต้องตั้งค่า Apps Script ก่อนจึงจะบันทึกได้';
 }
@@ -507,7 +551,7 @@ $('#bRef').onclick=()=>refresh(true);
 $('#ov').onclick=closeDr;$$('[data-close]').forEach(b=>b.onclick=closeDr);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDr();if(e.key==='r'&&e.altKey)refresh(true)});
 $('#bSave').onclick=async()=>{collect();if(S.notify&&'Notification' in window)await Notification.requestPermission();save();applyLook();schedule();closeDr();lastSig='';
-  if(map){map.setView(S.map.split(',').map(Number))}refresh(true)};
+  if(map){map.setView(S.map.split(',').map(Number),9)}refresh(true)};
 $('#bTest').onclick=async()=>{collect();if(!sheetId())return toast('กรุณาใส่ Sheet URL');
   try{const r=await fetchTab('KPI');toast('✓ เชื่อมต่อสำเร็จ พบ '+r.length+' แถวในแท็บ '+S.tabs.KPI)}catch(e){toast('✗ '+e.message)}};
 $('#bCode').onclick=()=>{$('#codeTxt').textContent=GS;openDr('#drCode')};
