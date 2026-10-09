@@ -374,6 +374,8 @@ const GREEN=['#dcfce7','#86efac','#34d399','#15803d','#052e16'];
 const METRICS={risk:['ระดับความเสี่ยง (แดง=สูงสุด)',d=>({'แดง':4,'ส้ม':3,'เหลือง':2,'เขียว':1,'ปกติ':0}[d.level]??0),4],
   h6:['ผลกระทบคาดการณ์ 6 ชม.',d=>sevNum(d.h6),4],h12:['ผลกระทบคาดการณ์ 12 ชม.',d=>sevNum(d.h12),4],h24:['ผลกระทบคาดการณ์ 24 ชม.',d=>sevNum(d.h24),4],
   vul:['จำนวนผู้ป่วยเปราะบาง (ราย)',d=>num(d.vulnerable),0]};
+const RISKPAL=['#22c55e','#a3e635','#facc15','#f97316','#ef4444'],RISKLBL=['ปกติ','เฝ้าระวัง','ปานกลาง','สูง','วิกฤต'];
+let mapPal='risk';
 let GEO=null,FAC=null,mapLayers={},mapMetric='risk',legend;
 async function loadGeo(){
   try{[GEO,FAC]=await Promise.all([fetch('narathiwat_districts.geojson').then(r=>r.json()),fetch('facilities_osm.json').then(r=>r.json())])}
@@ -394,7 +396,9 @@ function initMap(){
   legend.onAdd=()=>{const d=L.DomUtil.create('div');d.id='lg';d.style.cssText='background:rgba(5,11,26,.82);color:#e8f0ff;padding:8px 11px;border-radius:10px;font-size:.72rem;backdrop-filter:blur(6px)';return d};
   legend.addTo(map);
   $('#mapTools').innerHTML='<select id="mapMetric" style="width:auto;padding:3px 8px;font-size:.72rem">'+Object.entries(METRICS).map(([k,m])=>`<option value="${k}">${m[0]}</option>`).join('')+'</select>';
+  $('#mapMetric').insertAdjacentHTML('afterend',' <select id="mapPal" style="width:auto;padding:3px 8px;font-size:.72rem"><option value="risk">สีมาตรฐานความเสี่ยง (เขียว→เหลือง→แดง)</option><option value="green">เขียว (เข้ม = มาก)</option></select>');
   $('#mapMetric').onchange=e=>{mapMetric=e.target.value;renderMap()};
+  $('#mapPal').onchange=e=>{mapPal=e.target.value;renderMap()};
 }
 function renderMap(){
   if(!map)initMap();
@@ -403,11 +407,12 @@ function renderMap(){
   const [title,fn,fixedMax]=METRICS[mapMetric];
   const byName={};(DATA.Districts||[]).forEach(r=>{const d=obj('Districts',r);byName[String(d.district).replace(/^อ\.\s*/,'')]=d});
   const vals=GEO.features.map(f=>byName[f.properties.name]?fn(byName[f.properties.name]):0);
+  const PAL=mapPal==='risk'?RISKPAL:GREEN;
   const max=fixedMax||Math.max(1,...vals);
   const cls=v=>Math.min(4,Math.floor((v/max)*5-1e-9));
   mapLayers.dist.clearLayers();mapLayers.lab.clearLayers();
   GEO.features.forEach((f,i)=>{const d=byName[f.properties.name];const v=vals[i];
-    const l=L.geoJSON(f,{style:{fillColor:GREEN[Math.max(0,cls(v))],fillOpacity:d?.78:.25,color:'#fff',weight:1.6,opacity:.95},
+    const l=L.geoJSON(f,{style:{fillColor:PAL[Math.max(0,cls(v))],fillOpacity:d?.78:.25,color:'#fff',weight:1.6,opacity:.95},
       onEachFeature:(_,ly)=>{
         ly.bindTooltip(`<b>${esc(f.properties.name)}</b>${d?'<br>'+(mapMetric==='vul'?fmt(v)+' ราย':esc(title.split(' (')[0])+': '+v):''}`,{sticky:true});
         ly.bindPopup(d?`<b>อ.${esc(d.district)}</b> <small>(${esc(f.properties.name_en)} · ${f.properties.area_sqkm} ตร.กม.)</small><br>ระดับ: ${esc(d.level)} ${esc(d.trend)}<br>6 ชม.: ${esc(d.h6)} · 12 ชม.: ${esc(d.h12)} · 24 ชม.: ${esc(d.h24)}<br>ผู้ป่วยเปราะบาง: ${fmt(num(d.vulnerable))} ราย`:`<b>อ.${esc(f.properties.name)}</b><br>ไม่พบข้อมูลในชีต`);
@@ -427,7 +432,7 @@ function renderMap(){
     m.bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.name_en)}<br>อ.${esc(p.district)}${h?`<br>สถานะ: ${esc(h.level)} · Autonomy ${esc(h.autonomy_hr)} ชม.`:''}<br><small>OSM ${esc(p.id)}</small>`).addTo(mapLayers.fac)});
   // legend
   const steps=fixedMax?['ต่ำ','','','','สูง']:[0,1,2,3,4].map(i=>Math.round(max*i/5)+(i<4?'':'+'));
-  $('#lg').innerHTML=`<b>${esc(title)}</b><div style="display:flex;margin:5px 0 2px">${GREEN.map(c=>`<span style="flex:1;height:10px;background:${c}"></span>`).join('')}</div><div style="display:flex;justify-content:space-between;gap:12px"><span>น้อย</span><span>มาก</span></div><div style="margin-top:4px">▣ H รพ. · + รพ.สต. · c คลินิก (OSM)</div>`;
+  $('#lg').innerHTML=`<b>${esc(title)}</b><div style="display:flex;margin:5px 0 2px">${PAL.map(c=>`<span style="flex:1;height:10px;background:${c}"></span>`).join('')}</div><div style="display:flex;justify-content:space-between;gap:12px">${mapPal==='risk'?RISKLBL.map(t=>`<span>${t}</span>`).join(''):'<span>น้อย</span><span>มาก</span>'}</div><div style="margin-top:4px">▣ H รพ. · + รพ.สต. · c คลินิก (OSM)</div>`;
 }
 function renderDist(){
   const rows=(DATA.Districts||[]).map(r=>obj('Districts',r));
