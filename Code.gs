@@ -7,7 +7,7 @@
  *  อย่าแก้ส่วน DB ด้วยมือ — แก้ที่ index.html แล้วรัน: node tools/build.js
  *
  *  ความสามารถ
- *   1. setupDatabase()  สร้าง/ซ่อมแซมฐานข้อมูล 17 แท็บ พร้อมหัวตาราง รายการเลือก (Dropdown) รูปแบบข้อมูล
+ *   1. setupDatabase()  สร้าง/ซ่อมแซมฐานข้อมูล 19 แท็บ พร้อมหัวตาราง รายการเลือก (Dropdown) รูปแบบข้อมูล
  *   2. Web App API      ping / whoami / readAll / read / create / update / delete / replace / setup / setSharing
  *   3. สิทธิ์ 3 ระดับ     ADMIN (Full) · EDITOR (CRUD) · VIEWER (อ่าน + ปิดบังข้อมูลส่วนบุคคล)
  *   4. ตรวจสอบข้อมูลฝั่งเซิร์ฟเวอร์ (ชนิดข้อมูล, ค่าที่เลือกได้, ช่วงตัวเลข, ค่าซ้ำ) + ล็อกกันเขียนชนกัน
@@ -28,7 +28,7 @@
 
 const VERSION = '1.1.0';
 /** รหัสโครงสร้างฐานข้อมูล — สร้างอัตโนมัติ; Dashboard เทียบค่านี้เพื่อเตือนเมื่อ Code.gs ล้าสมัย */
-const SCHEMA_VERSION = '11s12ib';
+const SCHEMA_VERSION = 'gha0yc';
 
 /** รหัสผ่านแต่ละระดับ — แก้ก่อนใช้งานจริง (หรือเก็บใน Project Settings → Script properties: TOKEN_ADMIN / TOKEN_EDITOR / TOKEN_VIEWER) */
 const TOKENS = {
@@ -42,7 +42,7 @@ const MAX_TEXT = 2000;
 
 /** โครงสร้างฐานข้อมูล (สร้างโดย tools/build.js) */
 const DB = {
-  order: ["Config","Rainfall","Districts","GeoLayers","Roads","Vulnerable","EMS","Referral","Comms","Escalation","Hospitals","RPH","Resources","Logistics","Staff","BCP","Log"],
+  order: ["Config","Rainfall","Districts","GeoLayers","Roads","RoadCuts","BypassRoutes","Vulnerable","EMS","Referral","Comms","Escalation","Hospitals","RPH","Resources","Logistics","Staff","BCP","Log"],
   tabs: {
     Config: { label: "ค่าสถานการณ์จังหวัด", prefix: "CF", cols: [
       {"k":"id","l":"รหัส","t":"id"},
@@ -93,10 +93,47 @@ const DB = {
       {"k":"id","l":"รหัส","t":"id"},
       {"k":"route","l":"เส้นทาง/ถนน/สะพาน","t":"text","req":1},
       {"k":"district","l":"อำเภอ","t":"sel","o":["เมืองนราธิวาส","ตากใบ","บาเจาะ","ยี่งอ","ระแงะ","รือเสาะ","ศรีสาคร","แว้ง","สุคิริน","สุไหงโก-ลก","สุไหงปาดี","จะแนะ","เจาะไอร้อง"]},
+      {"k":"lat","l":"lat (จุดที่ตัดขาด/เสี่ยง)","t":"num","min":4,"max":8},
+      {"k":"lng","l":"lng","t":"num","min":100,"max":103},
       {"k":"type","l":"ประเภท","t":"sel","o":["หลัก","สำรอง (Bypass)","ทางน้ำ","ทางอากาศ"]},
       {"k":"status","l":"สถานะปัจจุบัน","t":"sel","o":["ผ่านได้","เสี่ยง","ตัดขาด"],"req":1},
       {"k":"cut_history_3y","l":"ประวัติถูกตัดขาดย้อนหลัง 3 ปี","t":"area"},
       {"k":"bypass_route","l":"เส้นทางสำรองที่กำหนด","t":"area"},
+      {"k":"note","l":"หมายเหตุ","t":"area"},
+      {"k":"updated_at","l":"แก้ไขล่าสุด","t":"ts"},
+      {"k":"updated_by","l":"แก้ไขโดย","t":"ts"}
+    ] },
+    RoadCuts: { label: "ประวัติเส้นทางถูกตัดขาด (ย้อนหลัง 3 ปี)", prefix: "RC", cols: [
+      {"k":"id","l":"รหัส","t":"id"},
+      {"k":"route","l":"เส้นทาง/ถนน/สะพาน","t":"text","req":1},
+      {"k":"district","l":"อำเภอ","t":"sel","o":["เมืองนราธิวาส","ตากใบ","บาเจาะ","ยี่งอ","ระแงะ","รือเสาะ","ศรีสาคร","แว้ง","สุคิริน","สุไหงโก-ลก","สุไหงปาดี","จะแนะ","เจาะไอร้อง"],"req":1},
+      {"k":"date_from","l":"ถูกตัดขาดตั้งแต่","t":"date","req":1},
+      {"k":"date_to","l":"เปิดใช้ได้อีกครั้ง","t":"date"},
+      {"k":"cause","l":"สาเหตุ","t":"sel","o":["น้ำท่วม","น้ำป่า/ดินสไลด์","สะพาน/ถนนชำรุด","อื่นๆ"],"req":1},
+      {"k":"disaster","l":"เหตุการณ์ภัยพิบัติ (เช่น อุทกภัยปลายปี 2568)","t":"text"},
+      {"k":"depth_cm","l":"ระดับน้ำสูงสุด (ซม.)","t":"num"},
+      {"k":"lat","l":"lat","t":"num","req":1,"min":4,"max":8},
+      {"k":"lng","l":"lng","t":"num","req":1,"min":100,"max":103},
+      {"k":"impact","l":"ผลกระทบต่อการส่งต่อ/ลงพื้นที่","t":"area"},
+      {"k":"bypass_used","l":"เส้นทางสำรองที่ใช้","t":"text"},
+      {"k":"note","l":"หมายเหตุ","t":"area"},
+      {"k":"updated_at","l":"แก้ไขล่าสุด","t":"ts"},
+      {"k":"updated_by","l":"แก้ไขโดย","t":"ts"}
+    ] },
+    BypassRoutes: { label: "เส้นทางสำรอง (Bypass Routes)", prefix: "BR", cols: [
+      {"k":"id","l":"รหัส","t":"id"},
+      {"k":"name","l":"ชื่อเส้นทางสำรอง","t":"text","req":1},
+      {"k":"purpose","l":"วัตถุประสงค์","t":"sel","o":["ส่งต่อผู้ป่วย","ลงพื้นที่","ทั้งสองอย่าง"],"req":1},
+      {"k":"replaces","l":"เลี่ยงเส้นทางหลัก (ชื่อตรงกับ Roads)","t":"text"},
+      {"k":"from_name","l":"ต้นทาง","t":"text","req":1},
+      {"k":"to_name","l":"ปลายทาง","t":"text","req":1},
+      {"k":"distance_km","l":"ระยะทาง (กม.)","t":"num"},
+      {"k":"duration_min","l":"เวลา (นาที)","t":"num"},
+      {"k":"vehicle","l":"ยานพาหนะที่ใช้ได้","t":"sel","o":["รถพยาบาล","รถ 4WD/ยกสูง","เรือ","เฮลิคอปเตอร์","ทุกชนิด"]},
+      {"k":"status","l":"สถานะ","t":"sel","o":["พร้อมใช้","เสี่ยง","ปิด"],"req":1},
+      {"k":"geometry","l":"พิกัดเส้นทาง (lat,lng;lat,lng;…)","t":"area","len":6000,"hide":1},
+      {"k":"verified_on","l":"สำรวจยืนยันเมื่อ","t":"date"},
+      {"k":"contact","l":"ผู้ประสานงาน/เบอร์","t":"phone"},
       {"k":"note","l":"หมายเหตุ","t":"area"},
       {"k":"updated_at","l":"แก้ไขล่าสุด","t":"ts"},
       {"k":"updated_by","l":"แก้ไขโดย","t":"ts"}
@@ -423,7 +460,7 @@ function validateRow_(tab, row, existing) {
     let v = row[c.k];
     v = v === undefined || v === null ? '' : String(v).trim();
     row[c.k] = v;
-    if (v.length > MAX_TEXT) return '"' + c.l + '" ยาวเกิน ' + MAX_TEXT + ' ตัวอักษร';
+    if (v.length > (c.len || MAX_TEXT)) return '"' + c.l + '" ยาวเกิน ' + (c.len || MAX_TEXT) + ' ตัวอักษร';
     if (c.req && !v) return 'กรุณากรอก "' + c.l + '"';
     if (!v) continue;
     if (c.t === 'num') {

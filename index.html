@@ -102,6 +102,7 @@ td.act{white-space:nowrap;position:sticky;right:0;background:color-mix(in srgb,v
 .empty{padding:34px 16px;text-align:center;color:var(--mu);font-size:.85rem;line-height:1.7;white-space:normal}
 .notice{padding:11px 15px;border-radius:12px;margin-bottom:14px;font-size:.8rem;border:1px solid rgba(250,204,21,.4);background:rgba(250,204,21,.09)}
 .notice.ok{background:rgba(34,197,94,.09);border-color:rgba(34,197,94,.4)}
+#rmap{height:560px;border-radius:14px;z-index:1}
 #map{height:540px;border-radius:14px;z-index:1}.leaflet-container{background:var(--bg2)}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--bg2);color:var(--tx)}
 .dlab{text-align:center;white-space:nowrap;font:600 12px/1.25 Prompt,sans-serif;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000,0 1px 4px #000;pointer-events:none;transform:translate(-50%,-50%)}
@@ -153,6 +154,9 @@ pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.
 <!-- Form modal -->
 <div class="ov" id="ovForm"><div class="md"><div class="mh"><span id="fmTitle"></span><span class="sp"></span><button class="sm" data-x="ovForm">✕</button></div><div class="mb" id="fmBody"></div><div class="mf"><button data-x="ovForm">ยกเลิก</button><button class="pri" id="fmOk">💾 บันทึกลง Sheet</button></div></div></div>
 
+<!-- Lat/Lng picker -->
+<div class="ov" id="ovPick" style="z-index:130"><div class="md wide"><div class="mh">📍 ปักหมุดตำแหน่ง<span class="sp"></span><span class="pill mono" id="pickInfo">คลิกบนแผนที่</span></div><div class="mb" style="padding:10px"><div id="pickMap" style="height:60vh;border-radius:12px"></div></div><div class="mf"><button id="pickNo">ยกเลิก</button><button class="pri" id="pickOk">ใช้ตำแหน่งนี้</button></div></div></div>
+
 <!-- Integration modal -->
 <div class="ov" id="ovInt"><div class="md wide"><div class="mh">🔗 Google Sheet &amp; GAS Integration<span class="sp"></span><span class="pill" id="intRole"></span><button class="sm" data-x="ovInt">✕</button></div>
  <div class="mb"><div class="tabs" id="intTabs"></div>
@@ -187,7 +191,7 @@ pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.
     <div class="step"><b>4</b><span>กด "ตรวจสอบการเชื่อมต่อ" ต้องเห็นบทบาท ADMIN/EDITOR จึงจะ CRUD ได้</span></div></fieldset>
   </div>
   <div id="itCode" style="display:none">
-   <div class="hint" style="margin-bottom:8px">Code.gs ฉบับสมบูรณ์ — สร้างฐานข้อมูลทั้ง 17 แท็บ ตรวจสอบข้อมูลฝั่งเซิร์ฟเวอร์ CRUD ทีละแถว บันทึกประวัติ (Log) ปิดบังข้อมูลส่วนบุคคลสำหรับ Viewer และจัดการสิทธิ์แชร์</div>
+   <div class="hint" style="margin-bottom:8px">Code.gs ฉบับสมบูรณ์ — สร้างฐานข้อมูลทั้ง 19 แท็บ ตรวจสอบข้อมูลฝั่งเซิร์ฟเวอร์ CRUD ทีละแถว บันทึกประวัติ (Log) ปิดบังข้อมูลส่วนบุคคลสำหรับ Viewer และจัดการสิทธิ์แชร์</div>
    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center"><button class="pri" id="cCopy">📋 คัดลอกโค้ด</button><button id="cDl">⬇ ดาวน์โหลด Code.gs</button><span class="hint" id="cInfo"></span></div>
    <pre id="cTxt">กำลังโหลด…</pre>
    <div class="step"><b>1</b><span>เปิด Google Sheet → Extensions → Apps Script → วางโค้ดทั้งหมดแทนของเดิม</span></div>
@@ -220,7 +224,9 @@ const SCHEMA={
  Rainfall:tab('ปริมาณฝนและพื้นที่เสี่ยง','RF',c('as_of','ข้อมูล ณ วันที่','date',{req:1}),c('district','อำเภอ','sel',{o:DIST,req:1}),c('rain24','ฝนสะสม 24 ชม. (มม.)','num'),c('rain72','ฝนสะสม 72 ชม. (มม.)','num'),c('forecast24','พยากรณ์ฝน 24 ชม. (มม.)','num'),c('source','แหล่งข้อมูล','sel',{o:['GISTDA','ThaiWater','ปภ.','กรมอุตุนิยมวิทยา','สถานีวัดท้องถิ่น']}),c('note','หมายเหตุ','area')),
  Districts:tab('ระดับความเสี่ยงรายอำเภอ','DS',c('district','อำเภอ','sel',{o:DIST,req:1,uniq:1}),c('level','ระดับความเสี่ยง','sel',{o:LVL,req:1}),c('trend','แนวโน้ม','sel',{o:['↑↑','↑','→','↓']}),c('h6','ผลกระทบ 6 ชม.','sel',{o:SEV}),c('h12','ผลกระทบ 12 ชม.','sel',{o:SEV}),c('h24','ผลกระทบ 24 ชม.','sel',{o:SEV}),c('note','หมายเหตุ','area')),
  GeoLayers:tab('ชั้นข้อมูลภูมิสารสนเทศ (GISTDA / ปภ. / อื่นๆ)','GL',c('name','ชื่อชั้นข้อมูล','text',{req:1}),c('provider','หน่วยงานเจ้าของข้อมูล','sel',{o:['GISTDA','ปภ.','ThaiWater/สนช.','กรมชลประทาน','อื่นๆ'],req:1}),c('type','ชนิดบริการ','sel',{o:['ArcGIS MapServer','WMS','XYZ Tile','GeoJSON'],req:1}),c('url','URL บริการ','text',{req:1}),c('layers','เลเยอร์ (ArcGIS: เลขเลเยอร์ เช่น 0,1 · WMS: ชื่อเลเยอร์)'),c('opacity','ความโปร่งใส (0-1)','num',{min:0,max:1}),c('visible','เปิดแสดงตอนเริ่ม','sel',{o:['ใช่','ไม่']}),c('note','หมายเหตุ/ที่มา','area')),
- Roads:tab('เส้นทางคมนาคมและเส้นทางสำรอง','RD',c('route','เส้นทาง/ถนน/สะพาน','text',{req:1}),c('district','อำเภอ','sel',{o:DIST}),c('type','ประเภท','sel',{o:['หลัก','สำรอง (Bypass)','ทางน้ำ','ทางอากาศ']}),c('status','สถานะปัจจุบัน','sel',{o:['ผ่านได้','เสี่ยง','ตัดขาด'],req:1}),c('cut_history_3y','ประวัติถูกตัดขาดย้อนหลัง 3 ปี','area'),c('bypass_route','เส้นทางสำรองที่กำหนด','area'),c('note','หมายเหตุ','area')),
+ Roads:tab('เส้นทางคมนาคมและเส้นทางสำรอง','RD',c('route','เส้นทาง/ถนน/สะพาน','text',{req:1}),c('district','อำเภอ','sel',{o:DIST}),c('lat','lat (จุดที่ตัดขาด/เสี่ยง)','num',{min:4,max:8}),c('lng','lng','num',{min:100,max:103}),c('type','ประเภท','sel',{o:['หลัก','สำรอง (Bypass)','ทางน้ำ','ทางอากาศ']}),c('status','สถานะปัจจุบัน','sel',{o:['ผ่านได้','เสี่ยง','ตัดขาด'],req:1}),c('cut_history_3y','ประวัติถูกตัดขาดย้อนหลัง 3 ปี','area'),c('bypass_route','เส้นทางสำรองที่กำหนด','area'),c('note','หมายเหตุ','area')),
+ RoadCuts:tab('ประวัติเส้นทางถูกตัดขาด (ย้อนหลัง 3 ปี)','RC',c('route','เส้นทาง/ถนน/สะพาน','text',{req:1}),c('district','อำเภอ','sel',{o:DIST,req:1}),c('date_from','ถูกตัดขาดตั้งแต่','date',{req:1}),c('date_to','เปิดใช้ได้อีกครั้ง','date'),c('cause','สาเหตุ','sel',{o:['น้ำท่วม','น้ำป่า/ดินสไลด์','สะพาน/ถนนชำรุด','อื่นๆ'],req:1}),c('disaster','เหตุการณ์ภัยพิบัติ (เช่น อุทกภัยปลายปี 2568)'),c('depth_cm','ระดับน้ำสูงสุด (ซม.)','num'),c('lat','lat','num',{req:1,min:4,max:8}),c('lng','lng','num',{req:1,min:100,max:103}),c('impact','ผลกระทบต่อการส่งต่อ/ลงพื้นที่','area'),c('bypass_used','เส้นทางสำรองที่ใช้'),c('note','หมายเหตุ','area')),
+ BypassRoutes:tab('เส้นทางสำรอง (Bypass Routes)','BR',c('name','ชื่อเส้นทางสำรอง','text',{req:1}),c('purpose','วัตถุประสงค์','sel',{o:['ส่งต่อผู้ป่วย','ลงพื้นที่','ทั้งสองอย่าง'],req:1}),c('replaces','เลี่ยงเส้นทางหลัก (ชื่อตรงกับ Roads)'),c('from_name','ต้นทาง','text',{req:1}),c('to_name','ปลายทาง','text',{req:1}),c('distance_km','ระยะทาง (กม.)','num'),c('duration_min','เวลา (นาที)','num'),c('vehicle','ยานพาหนะที่ใช้ได้','sel',{o:['รถพยาบาล','รถ 4WD/ยกสูง','เรือ','เฮลิคอปเตอร์','ทุกชนิด']}),c('status','สถานะ','sel',{o:['พร้อมใช้','เสี่ยง','ปิด'],req:1}),c('geometry','พิกัดเส้นทาง (lat,lng;lat,lng;…)','area',{len:6000,hide:1}),c('verified_on','สำรวจยืนยันเมื่อ','date'),c('contact','ผู้ประสานงาน/เบอร์','phone'),c('note','หมายเหตุ','area')),
  Vulnerable:tab('ทะเบียนกลุ่มเปราะบาง (Priority Evacuation)','VN',c('name','ชื่อ-สกุล','text',{req:1,pii:'name'}),c('group','กลุ่มผู้ป่วย','sel',{o:['หญิงตั้งครรภ์เสี่ยงสูง/ใกล้คลอด','ผู้ป่วย Dialysis','Home O2/Ventilator','ผู้ป่วยติดเตียง/พึ่งพาอุปกรณ์','ผู้ป่วยที่ขาดยาไม่ได้','SMI/จิตเวชรุนแรง','Palliative/Device-dependent','อื่นๆ'],req:1}),c('address','ที่อยู่','area',{req:1,pii:'addr'}),c('district','อำเภอ','sel',{o:DIST,req:1}),c('phone','เบอร์โทรที่ติดต่อได้จริง','phone',{req:1,pii:'phone'}),c('caregiver','ผู้ดูแล/ผู้ติดต่อสำรอง','text',{pii:'name'}),c('evac_priority','ลำดับอพยพ','sel',{o:['1','2','3']}),c('evac_status','สถานะอพยพ','sel',{o:['รอดำเนินการ','กำลังอพยพ','อพยพแล้ว','ไม่ต้องอพยพ']}),c('note','หมายเหตุ','area')),
  EMS:tab('หน่วย EMS และยานพาหนะ','EM',c('unit','หน่วย/ชื่อยานพาหนะ','text',{req:1}),c('type','ประเภท','sel',{o:['รถพยาบาล','เรือ','เฮลิคอปเตอร์','รถ 4WD/ยกสูง','อื่นๆ'],req:1}),c('base','ฐานปฏิบัติการ'),c('district','อำเภอ','sel',{o:DIST}),c('qty_total','จำนวนทั้งหมด','num'),c('qty_ready','พร้อมใช้งาน','num'),c('phone','เบอร์ติดต่อ','phone'),c('status','สถานะ','sel',{o:['พร้อม','จำกัด','ไม่พร้อม']}),c('note','หมายเหตุ','area')),
  Referral:tab('ระบบส่งต่อผู้ป่วยฉุกเฉิน (OPOH)','RR',c('from_facility','ต้นทาง','text',{req:1}),c('to_facility','ปลายทาง','text',{req:1}),c('route_main','เส้นทางหลัก','area'),c('route_bypass','เส้นทางสำรอง/แนวทางกรณีถูกตัดขาด','area'),c('transport','พาหนะ','sel',{o:['รถพยาบาล','เรือ','เฮลิคอปเตอร์','รถ 4WD']}),c('est_min','เวลาโดยประมาณ (นาที)','num'),c('status','สถานะเส้นทาง','sel',{o:['พร้อม','เสี่ยง','ใช้ไม่ได้'],req:1}),c('contact','เบอร์ประสานงาน','phone'),c('note','หมายเหตุ','area')),
@@ -382,7 +388,7 @@ function alerts(){
     if(has(h.autonomy_hr)&&num(h.autonomy_hr)<S.aut)add('org','รพ.'+h.name+' Autonomy ต่ำ',h.autonomy_hr+' ชม. < '+S.aut);
     if(has(h.autonomy_hr)&&has(h.rto_hr)&&num(h.autonomy_hr)<num(h.rto_hr))add('org','รพ.'+h.name+' Autonomy < RTO',h.autonomy_hr+' < '+h.rto_hr+' ชม.');
     ['ER','LR','OR','ICU'].filter(x=>h[x]==='R').forEach(x=>add('red','รพ.'+h.name+' '+x+' หยุดให้บริการ','ตรวจสอบแผนส่งต่อ'))});
-  D('Roads').filter(r=>r.status==='ตัดขาด').forEach(r=>add('org','ถนนถูกตัดขาด: '+r.route,r.bypass_route||'ยังไม่ระบุเส้นทางสำรอง'));
+  D('Roads').filter(r=>r.status==='ตัดขาด').forEach(r=>{const b=bypassFor(r);add(b?'yel':'org','ถนนถูกตัดขาด: '+r.route,b?'มีเส้นทางสำรองพร้อมใช้: '+b.name:(r.bypass_route||'ยังไม่มีเส้นทางสำรองที่พร้อมใช้'))});
   D('Referral').filter(r=>r.status==='ใช้ไม่ได้').forEach(r=>add('red','เส้นทางส่งต่อใช้ไม่ได้',r.from_facility+' → '+r.to_facility));
   D('Resources').forEach(r=>{if(r.status==='วิกฤต')add('red','ทรัพยากรวิกฤต: '+r.item,r.facility);else if(has(r.hours_remaining)&&has(r.min_required)&&num(r.hours_remaining)<num(r.min_required))add('yel','ทรัพยากรต่ำกว่าขั้นต่ำ: '+r.item,r.facility+' · '+r.hours_remaining+'/'+r.min_required+' ชม.')});
   D('Comms').filter(r=>r.test_result==='ไม่ผ่าน').forEach(r=>add('org','ระบบสื่อสารไม่ผ่านการทดสอบ',r.channel+' ('+r.tier+')'));
@@ -402,7 +408,7 @@ const PAGES=[
  {id:'s2',n:2,t:'แผนที่สถานการณ์และความเสี่ยงรายอำเภอ',tabs:['Districts'],map:1,d:'ขอบเขตอำเภอจาก geoBoundaries + OpenGISData-Thailand · พิกัดหน่วยบริการจาก OSM · ภาพดาวเทียม Esri'},
  {id:'s3',n:3,t:'ระดับความเสี่ยงและคาดการณ์ผลกระทบ (GISTDA + ปภ.)',tabs:['Districts'],ro:['district','level','trend','h6','h12','h24'],d:'ประเมินระดับความเสี่ยงและผลกระทบ 6 / 12 / 24 ชั่วโมงรายอำเภอ จากข้อมูล GISTDA (สถานีวัดระดับน้ำ, น้ำท่วมซ้ำซาก), ปภ. (ข้อมูลเปิด) และพยากรณ์ฝน — แสดงเทียบกับระดับที่บันทึกในชีต และบันทึกค่าแนะนำลงชีตได้เมื่อผู้มีสิทธิ์ยืนยัน'},
  {g:'ดูแลประชาชน & บัญชาการ'},
- {id:'s4',n:4,t:'เส้นทางคมนาคมและการเข้าถึง',tabs:['Roads'],d:'ประวัติเส้นทางถูกตัดขาดย้อนหลัง 3 ปี และเส้นทางสำรอง (Bypass Routes) สำหรับการลงพื้นที่และส่งต่อผู้ป่วย (BCP ข้อ 2)'},
+ {id:'s4',n:4,t:'เส้นทางคมนาคมและการเข้าถึง (ประวัติตัดขาด 3 ปี + เส้นทางสำรอง)',tabs:['Roads','RoadCuts','BypassRoutes'],d:'BCP ข้อ 2 — แผนที่ประวัติเส้นทางที่ถูกตัดขาดจากภัยพิบัติย้อนหลัง 3 ปี พร้อมกำหนดแผนที่เส้นทางสำรอง (Bypass Routes) สำหรับการลงพื้นที่และการส่งต่อผู้ป่วย — ออกแบบเส้นทางเลี่ยงจุดที่ถูกตัดขาดได้ในหน้านี้ และบันทึกลง Sheet'},
  {id:'s5',n:5,t:'กลุ่มเปราะบางและการอพยพลำดับแรก',tabs:['Vulnerable'],d:'ทะเบียนกลุ่มเปราะบางที่ต้องอพยพก่อน พร้อมชื่อ ที่อยู่ และเบอร์โทรที่ติดต่อได้จริง (BCP ข้อ 6) — ข้อมูลส่วนบุคคลถูกปิดบังสำหรับผู้ไม่มีสิทธิ์'},
  {id:'s6',n:6,t:'EMS และระบบส่งต่อผู้ป่วย (OPOH)',tabs:['EMS','Referral'],d:'ทรัพยากร EMS และเส้นทางส่งต่อหลัก/สำรอง รวมแนวทางกรณีเส้นทางถูกตัดขาด (BCP ข้อ 7)'},
  {id:'s7',n:7,t:'การสื่อสารและศูนย์บัญชาการ (Escalation)',tabs:['Comms','Escalation'],d:'ระบบสื่อสารหลัก/สำรองลำดับ 1 และ 2 พร้อมหลักฐานการทดสอบ และแผนยกระดับขอรับการสนับสนุน (BCP ข้อ 8–9)'},
@@ -464,7 +470,7 @@ const SUM={
  <div class="card"><h3>ฝนสะสมรายอำเภอ (ข้อมูลล่าสุด)</h3><div class="cb"><canvas id="c1"></canvas></div></div>`},
  s2(){const m=countBy(D('Districts'),r=>r.level),est=DIST.filter(n=>!D('Districts').some(d=>d.district===n&&d.level)&&assess(n)).length;return `<div class="chips">${LVL.map(l=>chip(l,m[l]||0,{แดง:'var(--red)',ส้ม:'var(--org)',เหลือง:'var(--yel)',เขียว:'var(--grn)'}[l])).join('')}${chip('ประเมินอัตโนมัติ (ยังไม่มีในชีต)',est,'var(--ac)')}${chip('รวมอำเภอ',DIST.length)}</div><div class="hint" style="margin:-6px 0 12px">สีของแต่ละอำเภอแบ่งตามระดับความเสี่ยงในแท็บ Districts ของ Sheet (เขียว/เหลือง/ส้ม/แดง) · อำเภอที่ยังไม่มีในชีตจะแสดงสีจากการประเมินอัตโนมัติเป็นเส้นประ</div>`},
  s3(){return s3Card()+`<div class="card"><h3>ระดับผลกระทบคาดการณ์รายอำเภอ (ตามที่บันทึกในชีต)</h3><div class="cb" style="height:300px"><canvas id="c3"></canvas></div></div>`},
- s4(){const m=countBy(D('Roads'),r=>r.status);return `<div class="chips">${chip('เส้นทางทั้งหมด',D('Roads').length)}${chip('ผ่านได้',m['ผ่านได้']||0,'var(--grn)')}${chip('เสี่ยง',m['เสี่ยง']||0,'var(--yel)')}${chip('ตัดขาด',m['ตัดขาด']||0,'var(--red)')}${chip('เส้นทางสำรองที่ผ่านได้',D('Roads').filter(r=>/สำรอง/.test(r.type)&&r.status==='ผ่านได้').length,'var(--ac)')}</div><div class="card" style="max-width:520px"><h3>สถานะเส้นทาง</h3><div class="cb"><canvas id="c4"></canvas></div></div>`},
+ s4(){return s4Html()},
  s5(){const V=D('Vulnerable'),m=countBy(V,r=>r.evac_status||'รอดำเนินการ');return `<div class="chips">${chip('ในทะเบียน',fmt(V.length))}${chip('อพยพลำดับ 1',V.filter(v=>v.evac_priority==='1').length,'var(--red)')}${chip('รอดำเนินการ',m['รอดำเนินการ']||0,'var(--yel)')}${chip('อพยพแล้ว',m['อพยพแล้ว']||0,'var(--grn)')}${chip('ไม่มีเบอร์ติดต่อ',V.filter(v=>!v.phone).length,'var(--org)')}</div><div class="card"><h3>จำนวนตามกลุ่มผู้ป่วย</h3><div class="cb"><canvas id="c5"></canvas></div></div>`},
  s6(){const E=D('EMS'),R=D('Referral'),m=countBy(R,r=>r.status);return `<div class="chips">${chip('หน่วย EMS',E.length)}${chip('ยานพาหนะพร้อม/ทั้งหมด',E.reduce((s,r)=>s+num(r.qty_ready),0)+' / '+E.reduce((s,r)=>s+num(r.qty_total),0),'var(--ac)')}${chip('เส้นทางส่งต่อพร้อม',m['พร้อม']||0,'var(--grn)')}${chip('เสี่ยง',m['เสี่ยง']||0,'var(--yel)')}${chip('ใช้ไม่ได้',m['ใช้ไม่ได้']||0,'var(--red)')}</div>`},
  s7(){const C=D('Comms');return `<div class="chips">${['หลัก','สำรองลำดับ 1','สำรองลำดับ 2'].map(t=>{const ok=C.some(r=>r.tier===t&&r.test_result==='ผ่าน');return chip('ระบบ'+t,ok?'✓ ผ่านทดสอบ':C.some(r=>r.tier===t)?'ยังไม่ผ่าน':'ยังไม่ระบุ',ok?'var(--grn)':'var(--org)')}).join('')}${chip('ช่องทางทั้งหมด',C.length)}${chip('ผู้ประสาน Escalation',D('Escalation').length)}</div>`},
@@ -478,7 +484,7 @@ function afterPage(p){
   const f={
    s1(){drawExposure();$('#expoBtn')?.addEventListener('click',()=>computeExposure(true));const X=derive(),r=D('Rainfall').filter(r=>r.as_of===X.rfDate);chart('c1','bar',r.map(x=>x.district),[{label:'24 ชม.',data:r.map(x=>num(x.rain24)),backgroundColor:'#38bdf8',borderRadius:4},{label:'72 ชม.',data:r.map(x=>num(x.rain72)),backgroundColor:'#818cf8',borderRadius:4}])},
    s3(){$('#fcBtn')?.addEventListener('click',()=>{EXPO_ST='idle';loadExtra(true);computeExposure(true)});$('#sugAll')?.addEventListener('click',()=>applySug(GEO.features.map(f=>f.properties.name)));$$('[data-sug]').forEach(b=>b.addEventListener('click',()=>applySug([b.dataset.sug])));loadExtra();const rows=D('Districts'),sv=v=>SEV.length-1-SEV.indexOf(v);chart('c3','bar',rows.map(d=>d.district),[['h6','6 ชม.','#38bdf8'],['h12','12 ชม.','#818cf8'],['h24','24 ชม.','#ec4899']].map(([k,l,c])=>({label:l,data:rows.map(d=>d[k]?sv(d[k]):0),backgroundColor:c,borderRadius:4})),{ys:{max:4},yt:{stepSize:1,callback:v=>SEV[SEV.length-1-v]}})},
-   s4(){const m=countBy(D('Roads'),r=>r.status);chart('c4','doughnut',Object.keys(m),[{data:Object.values(m),backgroundColor:Object.keys(m).map(k=>({ผ่านได้:'#22c55e',เสี่ยง:'#facc15',ตัดขาด:'#ef4444'}[k]||'#64748b')),borderWidth:0}])},
+   s4(){s4Charts();bindS4()},
    s5(){const m=countBy(D('Vulnerable'),r=>r.group);chart('c5','bar',Object.keys(m),[{label:'ราย',data:Object.values(m),backgroundColor:'#38bdf8',borderRadius:6}],{axis:'y',legend:false})},
    s8(){const H=D('Hospitals');chart('c8','bar',H.map(h=>h.name),[{label:'Autonomy',data:H.map(h=>has(h.autonomy_hr)?num(h.autonomy_hr):0),backgroundColor:'#22c55e',borderRadius:4},{label:'RTO',data:H.map(h=>has(h.rto_hr)?num(h.rto_hr):0),backgroundColor:'#f97316',borderRadius:4}])},
    s9(){const m=countBy(D('RPH'),r=>r.status);chart('c9','doughnut',Object.keys(m),[{data:Object.values(m),backgroundColor:Object.keys(m).map(k=>({ปกติ:'#22c55e',เฝ้าระวัง:'#facc15',เสี่ยง:'#f97316',ปิดให้บริการ:'#ef4444'}[k]||'#64748b')),borderWidth:0}])},
@@ -500,7 +506,7 @@ function bindModule(k,p){
 }
 function drawTable(k,p){
   const sc=SCHEMA[k],ro=$(`#m_${k}`).dataset.ro==='1';
-  let cols=sc.cols.filter(c=>c.k!=='id'&&c.k!=='updated_by');
+  let cols=sc.cols.filter(c=>c.k!=='id'&&c.k!=='updated_by'&&!c.hide);
   if(p.id==='s3')cols=cols.filter(c=>p.ro.includes(c.k));
   const q=(Q[k]||'').toLowerCase(),rows=D(k).filter(r=>!q||Object.values(r).join(' ').toLowerCase().includes(q));
   $(`[data-cnt="${k}"]`).textContent=rows.length+' / '+D(k).length;
@@ -514,9 +520,9 @@ function drawTable(k,p){
   setConn();
 }
 let fmCtx=null;
-function openForm(k,id,copy){
+function openForm(k,id,copy,preset){
   if(!canWrite())return toast('🔒 ต้องเชื่อมต่อผ่าน Web App ด้วย Token ระดับ EDITOR/ADMIN จึงจะเพิ่ม/แก้ไขได้',1);
-  const sc=SCHEMA[k],src=id?D(k).find(r=>r.id===id):null,edit=!!src&&!copy;
+  const sc=SCHEMA[k],src=id?D(k).find(r=>r.id===id):(preset||null),edit=!!id&&!copy&&!!src;
   fmCtx={k,id:edit?id:null};
   $('#fmTitle').textContent=(edit?'แก้ไข':'เพิ่ม')+' · '+sc.label;
   $('#fmBody').innerHTML=`<div class="r2">`+sc.cols.filter(c=>c.t!=='id'&&c.t!=='ts').map(c=>{
@@ -525,6 +531,8 @@ function openForm(k,id,copy){
     else if(c.t==='area')i=`<textarea id="f_${c.k}" rows="2">${esc(v)}</textarea>`;
     else i=`<input id="f_${c.k}" value="${esc(v)}" type="${c.t==='num'?'number':c.t==='date'?'date':c.t==='phone'?'tel':'text'}" ${c.t==='num'?'step="any"':''} ${c.min!=null?`min="${c.min}" max="${c.max}"`:''}>`;
     return `<div ${w}><label>${esc(c.l)}${c.req?' <span style="color:var(--red)">*</span>':''} <small>${c.k}</small></label>${i}</div>`}).join('')+`</div>`;
+  if(sc.cols.some(c=>c.k==='lat')&&sc.cols.some(c=>c.k==='lng')){$('#fmBody').insertAdjacentHTML('beforeend','<div style="margin-top:10px"><button type="button" class="sm" id="pickBtn">📍 ปักหมุดบนแผนที่ (เติม lat / lng)</button></div>');
+    $('#pickBtn').onclick=async()=>{const p=await pickLatLng($('#f_lat').value,$('#f_lng').value);if(p){$('#f_lat').value=p[0].toFixed(5);$('#f_lng').value=p[1].toFixed(5)}}}
   openOv('ovForm');$('#fmBody').querySelector('input,select,textarea')?.focus();
 }
 function validate(k,row){
@@ -533,6 +541,7 @@ function validate(k,row){
     if(c.t==='num'&&v!==''&&isNaN(+v))return `"${c.l}" ต้องเป็นตัวเลข`;
     if(c.min!=null&&v!==''&&(+v<c.min||+v>c.max))return `"${c.l}" ต้องอยู่ระหว่าง ${c.min}–${c.max}`;
     if(c.t==='phone'&&v&&!/^[0-9+\-\s()#,]{5,30}$/.test(v))return `"${c.l}" รูปแบบเบอร์โทรไม่ถูกต้อง`;
+    if(v&&v.length>(c.len||2000))return '"'+c.l+'" ยาวเกินกำหนด';
     if(c.uniq&&v&&D(k).some(r=>r[c.k]===v&&r.id!==fmCtx.id))return `"${c.l}" = ${v} มีอยู่แล้ว — ใช้การแก้ไขแทน`}
   return '';
 }
@@ -560,6 +569,181 @@ const METRICS={risk:['ระดับความเสี่ยง',d=>({'แ�
  gexp:['น้ำท่วมซ้ำซาก GISTDA (% พื้นที่อำเภอ)',d=>EXPO[d.district]?.pct||0,0],
  vul:['กลุ่มเปราะบางในทะเบียน (ราย)',d=>D('Vulnerable').filter(v=>v.district===d.district).length,0],
  rain:['ฝนสะสม 24 ชม. (มม.)',d=>{const X=derive(),r=D('Rainfall').find(r=>r.district===d.district&&r.as_of===X.rfDate);return r?num(r.rain24):0},0]};
+/* ======== เส้นทางคมนาคม: ประวัติถูกตัดขาดย้อนหลัง 3 ปี + เส้นทางสำรอง Bypass (BCP ข้อ 2) ======== */
+const RC_F={period:'3y',cause:''};
+const YEARCOL=['#ef4444','#f97316','#a855f7','#0ea5e9','#10b981','#64748b'];
+const isoDate=d=>d.toISOString().slice(0,10);
+const threeYAgo=()=>{const d=new Date();d.setFullYear(d.getFullYear()-3);return isoDate(d)};
+const rcYear=r=>(r.date_from||'').slice(0,4);
+const thYear=y=>(+y+543);
+const rcDays=r=>{if(!r.date_from)return 0;const a=new Date(r.date_from),b=new Date(r.date_to||r.date_from);return Math.max(1,Math.round((b-a)/864e5)+1)};
+function rcFiltered(){
+  const lim=threeYAgo();
+  return D('RoadCuts').filter(r=>r.date_from&&(RC_F.period==='all'||(RC_F.period==='3y'?r.date_from>=lim:rcYear(r)===RC_F.period))&&(!RC_F.cause||r.cause===RC_F.cause));
+}
+const rcRecent=()=>D('RoadCuts').filter(r=>r.date_from>=threeYAgo()&&has(r.lat)&&has(r.lng));
+const parseGeom=g=>String(g||'').split(';').map(p=>p.split(',').map(Number)).filter(p=>p.length===2&&!isNaN(p[0])&&!isNaN(p[1]));
+const bypassFor=r=>D('BypassRoutes').find(b=>b.status==='พร้อมใช้'&&(b.replaces||'').includes(r.route));
+/* ---- เรขาคณิต (เมตร) ---- */
+const M_LAT=111320;
+function dSeg(p,a,b){
+  const k=Math.cos(p[0]*Math.PI/180),px=(p[1]-a[1])*M_LAT*k,py=(p[0]-a[0])*M_LAT,bx=(b[1]-a[1])*M_LAT*k,by=(b[0]-a[0])*M_LAT,l2=bx*bx+by*by;
+  let t=l2?Math.max(0,Math.min(1,(px*bx+py*by)/l2)):0;return Math.hypot(px-t*bx,py-t*by);
+}
+function minDist(p,line){let m=1e12;for(let i=1;i<line.length;i++){const d=dSeg(p,line[i-1],line[i]);if(d<m)m=d}return line.length===1?Math.hypot((p[0]-line[0][0])*M_LAT,(p[1]-line[0][1])*M_LAT):m}
+function dpSimplify(pts,tol){
+  if(pts.length<3)return pts;const keep=new Array(pts.length).fill(false);keep[0]=keep[pts.length-1]=true;const st=[[0,pts.length-1]];
+  while(st.length){const [a,b]=st.pop();let mx=0,ix=-1;for(let i=a+1;i<b;i++){const d=dSeg(pts[i],pts[a],pts[b]);if(d>mx){mx=d;ix=i}}if(mx>tol&&ix>0){keep[ix]=true;st.push([a,ix],[ix,b])}}
+  return pts.filter((_,i)=>keep[i]);
+}
+function simplifyLine(pts,maxPts=120){let tol=5,o=pts;while(o.length>maxPts&&tol<2000){o=dpSimplify(pts,tol);tol*=1.6}return o}
+const geomStr=pts=>pts.map(p=>p[0].toFixed(5)+','+p[1].toFixed(5)).join(';');
+const offsetPt=(p,brg,m)=>{const b=brg*Math.PI/180;return [p[0]+m*Math.cos(b)/M_LAT,p[1]+m*Math.sin(b)/(M_LAT*Math.cos(p[0]*Math.PI/180))]};
+
+/* ---- สรุป/กราฟ ---- */
+function s4Html(){
+  const F=rcFiltered(),roads=D('Roads'),cut=roads.filter(r=>r.status==='ตัดขาด'),noBy=cut.filter(r=>!bypassFor(r));
+  const rep=countBy(F,r=>r.route),repeated=Object.values(rep).filter(n=>n>=2).length;
+  const BR=D('BypassRoutes'),ready=BR.filter(b=>b.status==='พร้อมใช้').length;
+  const yrs=[...new Set(D('RoadCuts').map(rcYear).filter(Boolean))].sort().reverse();
+  return `<div class="chips">${chip('เหตุการณ์ถูกตัดขาด ('+(RC_F.period==='3y'?'3 ปีย้อนหลัง':RC_F.period==='all'?'ทั้งหมด':'พ.ศ. '+thYear(RC_F.period))+')',F.length,'var(--red)')}${chip('อำเภอที่ได้รับผลกระทบ',new Set(F.map(r=>r.district).filter(Boolean)).size)}${chip('ตัดขาดนานสุด',F.length?Math.max(...F.map(rcDays))+' วัน':'—','var(--org)')}${chip('จุดที่ถูกตัดซ้ำ (≥2 ครั้ง)',repeated,'var(--pink)')}${chip('เส้นทางสำรองพร้อมใช้',ready+' / '+BR.length,'var(--grn)')}${chip('เส้นทางหลักตัดขาดตอนนี้',cut.length,'var(--org)')}${chip('ตัดขาดแต่ยังไม่มีเส้นทางสำรอง',noBy.length,noBy.length?'var(--red)':'var(--grn)')}</div>
+  <div class="card"><h3>🗺 แผนที่ประวัติเส้นทางถูกตัดขาด และเส้นทางสำรอง (Bypass)<span class="tools"><select id="rcPeriod" style="width:auto;padding:3px 8px;font-size:.74rem"><option value="3y">3 ปีย้อนหลัง</option>${yrs.map(y=>`<option value="${y}">พ.ศ. ${thYear(y)}</option>`).join('')}<option value="all">ทั้งหมด</option></select><select id="rcCause" style="width:auto;padding:3px 8px;font-size:.74rem"><option value="">ทุกสาเหตุ</option>${SCHEMA.RoadCuts.cols.find(c=>c.k==='cause').o.map(o=>`<option>${o}</option>`).join('')}</select></span></h3><div id="rmap"></div>
+  <div class="hint" style="margin-top:6px">จุดวงกลม = เหตุการณ์ที่ถูกตัดขาด (สีตามปี · ขนาดตามจำนวนวัน) · เส้นทึบ/ประ = เส้นทางสำรองสำหรับส่งต่อผู้ป่วย/ลงพื้นที่ · พื้นสีฟ้า–เหลือง = น้ำท่วมซ้ำซาก GISTDA · ข้อมูลประวัติมาจากแท็บ RoadCuts ใน Sheet เท่านั้น</div></div>
+  <div class="card"><h3>🧭 ออกแบบเส้นทางสำรอง (ส่งต่อผู้ป่วย / ลงพื้นที่)<span class="tools"><span class="hint" id="plSt"></span></span></h3>
+   <div class="r2"><div><label>ต้นทาง</label><div style="display:flex;gap:6px"><select id="plFrom"></select><button class="sm" id="plPickF" title="เลือกจากแผนที่">📍</button></div></div><div><label>ปลายทาง</label><div style="display:flex;gap:6px"><select id="plTo"></select><button class="sm" id="plPickT" title="เลือกจากแผนที่">📍</button></div></div></div>
+   <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap"><button class="pri" id="plGo">คำนวณเส้นทางเลี่ยงจุดที่ถูกตัดขาด</button><span class="hint" style="align-self:center">เส้นทางคำนวณจากถนน OpenStreetMap (OSRM) เลี่ยงจุดใน Roads ที่ "ตัดขาด" และมีพิกัด · ต้องสำรวจยืนยันภาคสนามก่อนใช้งานจริง</span></div>
+   <div id="plRes"></div></div>
+  <div class="grid"><div class="card c4"><h3>เหตุการณ์ตัดขาดรายปี</h3><div class="cb"><canvas id="c4a"></canvas></div></div><div class="card c4"><h3>สาเหตุ</h3><div class="cb"><canvas id="c4b"></canvas></div></div><div class="card c4"><h3>เส้นทางที่ถูกตัดบ่อยที่สุด</h3><div class="cb"><canvas id="c4c"></canvas></div></div></div>`;
+}
+function s4Charts(){
+  const F=rcFiltered(),by=countBy(F,r=>thYear(rcYear(r))),cs=countBy(F,r=>r.cause),top=Object.entries(countBy(F,r=>r.route)).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const ks=Object.keys(by).sort();chart('c4a','bar',ks.map(k=>'พ.ศ. '+k),[{label:'ครั้ง',data:ks.map(k=>by[k]),backgroundColor:'#ef4444',borderRadius:5}],{legend:false});
+  chart('c4b','doughnut',Object.keys(cs),[{data:Object.values(cs),backgroundColor:PAL,borderWidth:0}]);
+  chart('c4c','bar',top.map(t=>t[0]),[{label:'ครั้ง',data:top.map(t=>t[1]),backgroundColor:'#f97316',borderRadius:5}],{axis:'y',legend:false});
+}
+/* ---- แผนที่ ---- */
+let RM={g:{},lines:[],sel:-1};
+async function drawRoadMap(){
+  if(!$('#rmap'))return;await loadGeo();if(!GEO||!$('#rmap')||map)return;
+  map=L.map('rmap').setView(S.map.split(',').map(Number),9);
+  const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'Imagery © Esri'}).addTo(map);
+  const lab=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:18}).addTo(map);
+  const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'});
+  map.createPane('geo');map.getPane('geo').style.zIndex=350;map.getPane('geo').style.pointerEvents='none';
+  RM.g={dist:L.layerGroup().addTo(map),flood:makeGeoLayer({...BUILTIN_GEO[0],opacity:.65}),rc:L.layerGroup().addTo(map),cur:L.layerGroup().addTo(map),by:L.layerGroup().addTo(map),fac:L.layerGroup().addTo(map),pl:L.layerGroup().addTo(map)};
+  RM.g.flood.addTo(map);
+  L.control.layers({'ภาพดาวเทียม (Esri)':sat,'แผนที่ถนน (OSM)':osm},{'ชื่อสถานที่':lab,'ขอบเขตอำเภอ':RM.g.dist,'น้ำท่วมซ้ำซาก GISTDA':RM.g.flood,'ประวัติถูกตัดขาด':RM.g.rc,'ถนนที่ตัดขาด/เสี่ยงตอนนี้':RM.g.cur,'เส้นทางสำรอง (Bypass)':RM.g.by,'โรงพยาบาล/รพ.สต.':RM.g.fac,'เส้นทางที่ออกแบบ':RM.g.pl}).addTo(map);
+  L.control.attribution({prefix:false}).addTo(map).addAttribution('geoBoundaries · OpenGISData-Thailand · © OSM contributors · GISTDA · เส้นทาง OSRM');
+  L.geoJSON(GEO,{style:{fill:false,color:'#fff',weight:1.4,dashArray:'5 4'},interactive:false}).addTo(RM.g.dist);
+  map.fitBounds(L.geoJSON(GEO).getBounds(),{padding:[10,10]});
+  const lg=L.control({position:'bottomleft'});lg.onAdd=()=>{const d=L.DomUtil.create('div');d.id='rlg';d.style.cssText='background:rgba(5,11,26,.86);color:#e8f0ff;padding:8px 11px;border-radius:10px;font-size:.72rem;max-width:230px';return d};lg.addTo(map);
+  paintRoadMap();
+}
+function paintRoadMap(){
+  if(!map||!RM.g.rc)return;['rc','cur','by','fac'].forEach(k=>RM.g[k].clearLayers());
+  const F=rcFiltered(),yrs=[...new Set(D('RoadCuts').map(rcYear).filter(Boolean))].sort().reverse(),yc=y=>YEARCOL[Math.max(0,yrs.indexOf(y))%YEARCOL.length];
+  F.filter(r=>has(r.lat)&&has(r.lng)).forEach(r=>{const dd=rcDays(r);
+    L.circleMarker([+r.lat,+r.lng],{radius:6+Math.min(9,dd/3),color:'#fff',weight:2,fillColor:yc(rcYear(r)),fillOpacity:.85}).bindPopup(`<b>${esc(r.route)}</b> <small>อ.${esc(r.district||'-')}</small><br>${esc(r.date_from)} → ${esc(r.date_to||'—')} (${dd} วัน)<br>สาเหตุ: ${esc(r.cause||'-')}${r.disaster?' · '+esc(r.disaster):''}${r.depth_cm?'<br>ระดับน้ำ '+esc(r.depth_cm)+' ซม.':''}${r.bypass_used?'<br>ใช้เส้นทางสำรอง: '+esc(r.bypass_used):''}${r.impact?'<br><small>'+esc(r.impact)+'</small>':''}`).addTo(RM.g.rc)});
+  D('Roads').filter(r=>has(r.lat)&&has(r.lng)&&(r.status==='ตัดขาด'||r.status==='เสี่ยง')).forEach(r=>{const c=r.status==='ตัดขาด'?'#ef4444':'#f59e0b';
+    L.marker([+r.lat,+r.lng],{icon:L.divIcon({className:'',iconSize:[26,26],html:`<div style="width:26px;height:26px;border-radius:7px;background:${c};color:#fff;border:2px solid #fff;display:grid;place-items:center;font:700 14px Prompt;box-shadow:0 2px 8px rgba(0,0,0,.5)">${r.status==='ตัดขาด'?'✕':'!'}</div>`}),zIndexOffset:800}).bindPopup(`<b>${esc(r.route)}</b><br>สถานะ: ${esc(r.status)}<br>${bypassFor(r)?'เส้นทางสำรอง: '+esc(bypassFor(r).name):'<b style="color:#ef4444">ยังไม่มีเส้นทางสำรองที่พร้อมใช้</b>'}`).addTo(RM.g.cur)});
+  D('BypassRoutes').forEach(b=>{const pts=parseGeom(b.geometry);if(pts.length<2)return;
+    const c={'พร้อมใช้':'#16a34a','เสี่ยง':'#f59e0b','ปิด':'#64748b'}[b.status]||'#0ea5e9',pa=b.purpose==='ลงพื้นที่';
+    L.polyline(pts,{color:'#fff',weight:8,opacity:.9}).addTo(RM.g.by);
+    L.polyline(pts,{color:c,weight:5,opacity:.95,dashArray:pa?'10 8':null}).bindPopup(`<b>${esc(b.name)}</b><br>${esc(b.from_name)} → ${esc(b.to_name)}<br>${esc(b.purpose)} · ${esc(b.vehicle||'-')} · ${esc(b.status)}<br>${b.distance_km?esc(b.distance_km)+' กม.':''} ${b.duration_min?'· '+esc(b.duration_min)+' นาที':''}<br>เลี่ยง: ${esc(b.replaces||'-')}${b.verified_on?'<br><small>สำรวจยืนยัน '+esc(b.verified_on)+'</small>':'<br><small style="color:#f59e0b">ยังไม่ได้สำรวจยืนยัน</small>'}`).addTo(RM.g.by)});
+  facList().forEach(f=>L.marker([f.lat,f.lng],{icon:L.divIcon({className:'',iconSize:[20,20],html:`<div style="width:20px;height:20px;border-radius:6px;background:#fff;color:#0b5ed7;border:2px solid #0b5ed7;display:grid;place-items:center;font:700 11px Prompt">${f.type==='รพ.สต.'?'+':'H'}</div>`})}).bindPopup(`<b>${esc(f.name)}</b><br><small>${esc(f.type)}</small>`).addTo(RM.g.fac));
+  $('#rlg').innerHTML=`<b>ประวัติถูกตัดขาด</b>${yrs.slice(0,6).map(y=>`<div style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${yc(y)};border:1px solid #fff"></span>พ.ศ. ${thYear(y)}</div>`).join('')||'<div style="opacity:.7">ยังไม่มีข้อมูลในแท็บ RoadCuts</div>'}<div style="margin-top:5px"><span style="color:#16a34a">━</span> สำรองพร้อมใช้ <span style="color:#f59e0b">━</span> เสี่ยง <span style="color:#64748b">━</span> ปิด<br>━ ส่งต่อ · ┅ ลงพื้นที่ · <span style="color:#ef4444">✕</span> ตัดขาดตอนนี้</div>`;
+}
+/* ---- ออกแบบเส้นทางสำรอง ---- */
+function facList(){
+  const o=[],seen=new Set(),add=(n,la,ln,t)=>{if(!n||!has(la)||!has(ln))return;const k=n.replace(/\s|โรงพยาบาล|รพ\./g,'');if(seen.has(k))return;seen.add(k);o.push({name:n,lat:+la,lng:+ln,type:t})};
+  D('Hospitals').forEach(h=>add('รพ.'+h.name,h.lat,h.lng,'รพ.'));D('RPH').forEach(h=>add(h.name,h.lat,h.lng,'รพ.สต.'));
+  (FAC?.items||[]).filter(p=>p.type==='hospital'&&!/ไม่ระบุ/.test(p.name)).forEach(p=>add(p.name,p.lat,p.lng,'รพ.'));return o;
+}
+const PLP={from:null,to:null,cands:[],sel:-1};
+function fillPlanner(){
+  const fl=facList(),opt=fl.map((f,i)=>`<option value="${i}">${esc(f.name)}</option>`).join('');
+  ['plFrom','plTo'].forEach((id,k)=>{const el=$('#'+id);if(!el)return;el.innerHTML='<option value="">— เลือกสถานที่ —</option>'+opt+(PLP[k?'to':'from']&&PLP[k?'to':'from'].custom?`<option value="c" selected>${esc(PLP[k?'to':'from'].name)}</option>`:'');
+    el.onchange=()=>{PLP[k?'to':'from']=el.value===''?null:el.value==='c'?PLP[k?'to':'from']:fl[+el.value]}});
+  const st=$('#plSt');if(st)st.textContent=fl.length?fl.length+' สถานที่ (จาก Hospitals/RPH ที่มีพิกัด + OSM)':'ยังไม่มีสถานที่ — ใส่ lat/lng ใน Hospitals/RPH หรือเลือกจากแผนที่';
+}
+async function osrmRoute(pts){
+  const u='https://router.project-osrm.org/route/v1/driving/'+pts.map(p=>p[1].toFixed(5)+','+p[0].toFixed(5)).join(';')+'?overview=full&geometries=geojson&alternatives=true&steps=false';
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),25000);
+  try{const r=await fetch(u,{signal:ctl.signal});const j=await r.json();if(j.code!=='Ok')return [];return j.routes.map(x=>({line:x.geometry.coordinates.map(c=>[c[1],c[0]]),km:x.distance/1000,min:x.duration/60}))}
+  finally{clearTimeout(t)}
+}
+function evalRoute(c,hard,soft){
+  const hh=hard.filter(b=>minDist(b.p,c.line)<250),sh=soft.filter(p=>minDist(p,c.line)<250);
+  return {...c,hardHits:hh,softHits:sh.length};
+}
+async function planRoutes(){
+  const from=PLP.from,to=PLP.to,res=$('#plRes');
+  if(!from||!to)return toast('เลือกต้นทางและปลายทางก่อน',1);
+  const A=[from.lat,from.lng],B=[to.lat,to.lng];
+  const hard=D('Roads').filter(r=>r.status==='ตัดขาด'&&has(r.lat)&&has(r.lng)).map(r=>({p:[+r.lat,+r.lng],name:r.route}));
+  const soft=rcRecent().map(r=>[+r.lat,+r.lng]);
+  res.innerHTML='<div class="hint">⏳ กำลังคำนวณเส้นทาง…</div>';$('#plGo').disabled=true;
+  try{
+    const direct=(await osrmRoute([A,B])).map(c=>evalRoute(c,hard,soft));
+    let cands=[...direct];const blocked=[...new Map(direct.flatMap(c=>c.hardHits).map(b=>[b.name,b])).values()];
+    const ok=()=>cands.filter(c=>!c.hardHits.length);
+    if(blocked.length&&!ok().length){
+      const base=direct[0]?direct[0].km:50,vias=[];
+      blocked.slice(0,2).forEach(b=>[2500,5000,8000].forEach(m=>[0,45,90,135,180,225,270,315].forEach(br=>vias.push(offsetPt(b.p,br,m)))));
+      for(let i=0;i<vias.length&&ok().length<3;i++){
+        res.innerHTML='<div class="hint">⏳ ค้นหาเส้นทางเลี่ยง '+(i+1)+'/'+vias.length+' …</div>';
+        let rs=[];try{rs=await osrmRoute([A,vias[i],B])}catch(e){}
+        rs.map(c=>evalRoute(c,hard,soft)).forEach(c=>{if(!c.hardHits.length&&c.km<=Math.max(base*3,base+80)&&!cands.some(x=>Math.abs(x.km-c.km)/x.km<.03))cands.push(c)});
+        await new Promise(r=>setTimeout(r,350));
+      }
+    }
+    cands=cands.map((c,i)=>({...c,blocked:blocked.map(b=>b.name)})).sort((a,b)=>(a.hardHits.length-b.hardHits.length)||(a.softHits-b.softHits)||(a.min-b.min)).slice(0,4);
+    PLP.cands=cands;PLP.sel=cands.findIndex(c=>!c.hardHits.length);if(PLP.sel<0)PLP.sel=0;
+    drawCands();
+    res.innerHTML=cands.length?`<div class="tw" style="max-height:none"><table><tr><th></th><th>เส้นทาง</th><th>ระยะทาง</th><th>เวลา</th><th>ผ่านจุดที่ตัดขาดตอนนี้</th><th>ผ่านจุดเคยถูกตัด (3 ปี)</th></tr>${cands.map((c,i)=>`<tr><td><input type="radio" name="plR" value="${i}" ${i===PLP.sel?'checked':''} style="width:auto"></td><td><span style="display:inline-block;width:14px;height:5px;background:${['#4f46e5','#0ea5e9','#10b981','#f59e0b'][i]};border-radius:3px"></span> ทางเลือก ${i+1}${i===0?' (แนะนำ)':''}</td><td class="mono">${c.km.toFixed(1)} กม.</td><td class="mono">${Math.round(c.min)} นาที</td><td>${c.hardHits.length?'<span class="tag t-red">'+esc(c.hardHits.map(h=>h.name).join(', '))+'</span>':'<span class="tag t-grn">ไม่ผ่าน</span>'}</td><td class="mono">${c.softHits} จุด</td></tr>`).join('')}</table></div>
+     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="pri" data-w="edit" id="plSave">💾 บันทึกเป็นเส้นทางสำรอง (ลง Sheet)</button><span class="hint" style="align-self:center">${blocked.length?'เลี่ยง: '+esc(blocked.map(b=>b.name).join(', ')):'ไม่มีจุดตัดขาดที่มีพิกัดบนเส้นทางตรง — เส้นทางตรงใช้ได้'}</span></div>`
+     :'<div class="empty">ไม่พบเส้นทาง — ลองเปลี่ยนต้นทาง/ปลายทาง</div>';
+    $$('input[name=plR]').forEach(r=>r.onchange=()=>{PLP.sel=+r.value;drawCands()});
+    $('#plSave')?.addEventListener('click',savePlanned);setConn();
+  }catch(e){res.innerHTML='<div class="notice">คำนวณไม่สำเร็จ: '+esc(e.message)+' (บริการ OSRM อาจไม่ตอบสนอง)</div>'}
+  finally{$('#plGo').disabled=false}
+}
+function drawCands(){
+  if(!map||!RM.g.pl)return;RM.g.pl.clearLayers();const cols=['#4f46e5','#0ea5e9','#10b981','#f59e0b'];
+  PLP.cands.forEach((c,i)=>{if(i!==PLP.sel)L.polyline(c.line,{color:cols[i],weight:4,opacity:.7,dashArray:'2 7'}).addTo(RM.g.pl)});
+  const c=PLP.cands[PLP.sel];if(c){L.polyline(c.line,{color:'#fff',weight:9,opacity:.95}).addTo(RM.g.pl);const pl=L.polyline(c.line,{color:cols[PLP.sel],weight:5}).addTo(RM.g.pl);map.fitBounds(pl.getBounds(),{padding:[40,40]})}
+  [[PLP.from,'A','#16a34a'],[PLP.to,'B','#dc2626']].forEach(([p,t,col])=>p&&L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',iconSize:[26,26],html:`<div style="width:26px;height:26px;border-radius:50%;background:${col};color:#fff;border:2px solid #fff;display:grid;place-items:center;font:700 13px Prompt">${t}</div>`}),zIndexOffset:1000}).addTo(RM.g.pl));
+}
+function savePlanned(){
+  const c=PLP.cands[PLP.sel];if(!c)return;
+  openForm('BypassRoutes',null,false,{name:(c.blocked.length?'เลี่ยง '+c.blocked.join(', ')+' : ':'')+PLP.from.name+' → '+PLP.to.name,purpose:'ส่งต่อผู้ป่วย',replaces:c.blocked.join(', '),from_name:PLP.from.name,to_name:PLP.to.name,distance_km:c.km.toFixed(1),duration_min:Math.round(c.min),vehicle:'รถพยาบาล',status:'เสี่ยง',geometry:geomStr(simplifyLine(c.line,120)),note:'คำนวณจากถนน OpenStreetMap (OSRM) — ต้องสำรวจยืนยันภาคสนามก่อนปรับสถานะเป็น "พร้อมใช้"'});
+}
+function pickLatLng(la,ln){
+  return new Promise(res=>{
+    $('#ovPick').classList.add('on');
+    const c=(has(la)&&has(ln))?[+la,+ln]:S.map.split(',').map(Number);
+    if(window._pm){window._pm.remove();window._pm=null}
+    const pm=window._pm=L.map('pickMap').setView(c,has(la)?14:9);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18}).addTo(pm);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:18}).addTo(pm);
+    let mk=has(la)?L.marker(c).addTo(pm):null,cur=has(la)?c:null;
+    pm.on('click',e=>{cur=[e.latlng.lat,e.latlng.lng];if(mk)mk.setLatLng(e.latlng);else mk=L.marker(e.latlng).addTo(pm);$('#pickInfo').textContent=cur[0].toFixed(5)+', '+cur[1].toFixed(5)});
+    setTimeout(()=>pm.invalidateSize(),150);$('#pickInfo').textContent=cur?cur[0].toFixed(5)+', '+cur[1].toFixed(5):'คลิกบนแผนที่เพื่อปักหมุด';
+    const done=v=>{$('#ovPick').classList.remove('on');$('#pickOk').onclick=$('#pickNo').onclick=null;res(v)};
+    $('#pickOk').onclick=()=>done(cur);$('#pickNo').onclick=()=>done(null);
+  });
+}
+function bindS4(){
+  fillPlanner();loadGeo().then(()=>{fillPlanner();paintRoadMap()});
+  $('#rcPeriod').value=RC_F.period;$('#rcCause').value=RC_F.cause;
+  $('#rcPeriod').onchange=e=>{RC_F.period=e.target.value;paintRoadMap();s4Charts();renderS4Chips()};
+  $('#rcCause').onchange=e=>{RC_F.cause=e.target.value;paintRoadMap();s4Charts();renderS4Chips()};
+  $('#plGo').onclick=planRoutes;
+  [['plPickF','from','plFrom'],['plPickT','to','plTo']].forEach(([b,k,sel])=>$('#'+b).onclick=async()=>{const p=await pickLatLng();if(p){PLP[k]={name:'จุดที่เลือก ('+p[0].toFixed(4)+', '+p[1].toFixed(4)+')',lat:p[0],lng:p[1],custom:1};fillPlanner()}});
+  drawRoadMap().then(()=>{if(PLP.cands.length)drawCands()});
+}
+function renderS4Chips(){const el=document.querySelector('#main .chips');if(el){const t=document.createElement('div');t.innerHTML=s4Html();const nc=t.querySelector('.chips');if(nc)el.innerHTML=nc.innerHTML}}
+
 /* ======== ระดับความเสี่ยงและคาดการณ์ผลกระทบ: GISTDA + ปภ. + พยากรณ์ฝน ======== */
 const GFL='https://gistdaportal.gistda.or.th/data/rest/services/GFlood/GFlood_Inno_WFS/MapServer';
 const DDPM_B='https://gistdaportal.gistda.or.th/data/rest/services/opendata/';
