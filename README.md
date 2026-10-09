@@ -23,7 +23,7 @@ Dashboard ศูนย์ปฏิบัติการฉุกเฉิน (EO
 
 ## ติดตั้งฐานข้อมูล
 1. สร้าง Google Sheet ใหม่ (หรือใช้ไฟล์ว่าง) → Extensions → Apps Script → วาง `Code.gs`
-2. ตรวจ `TOKENS` — ตั้ง ADMIN = EDITOR = `admin` แล้ว (VIEWER ปิดอยู่จนกว่าจะตั้งรหัสเอง) → รันฟังก์ชัน `setupDatabase` → อนุญาตสิทธิ์
+2. เมนู **BCP นราธิวาส → ตั้งรหัสผ่าน (Token)** (หรือรัน `setToken('admin','รหัสของคุณ')`) — รหัสเก็บใน Script Properties **ไม่มีรหัสอยู่ในโค้ด/GitHub** ถ้ายังไม่ตั้ง ระบบปฏิเสธทุกคำสั่ง → รันฟังก์ชัน `setupDatabase` → อนุญาตสิทธิ์
 3. Deploy → Web app → Execute as **Me** · Who has access **Anyone** → คัดลอก URL `/exec`
 4. เปิด Dashboard → **Sheet & GAS** → ใส่ URL + Token → ตรวจสอบการเชื่อมต่อ
 

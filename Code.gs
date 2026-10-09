@@ -18,7 +18,7 @@
  *
  *  วิธีติดตั้ง
  *   1) เปิด Google Sheet → Extensions → Apps Script → วางโค้ดนี้แทนของเดิม → Save
- *   2) TOKENS ด้านล่าง: ตอนนี้ ADMIN = EDITOR = 'admin' (VIEWER ยังปิดอยู่จนกว่าจะแก้เป็นรหัสของคุณ — ค่าที่มี 'เปลี่ยนรหัสนี้' จะถูกปฏิเสธ)
+ *   2) ตั้งรหัสผ่าน: เมนู "BCP นราธิวาส → ตั้งรหัสผ่าน (Token)" หรือรัน setToken('admin','รหัสของคุณ') — รหัสเก็บใน Script Properties ไม่มีอยู่ในซอร์สโค้ด/GitHub
  *   3) เลือกฟังก์ชัน setupDatabase → Run → อนุญาตสิทธิ์ (Sheets, Drive)
  *   4) Deploy → New deployment → Web app → Execute as: Me · Who has access: Anyone
  *   5) คัดลอก URL /exec + Token ไปวางในเมนู "Sheet & GAS" ของ Dashboard
@@ -29,13 +29,6 @@
 const VERSION = '1.1.0';
 /** รหัสโครงสร้างฐานข้อมูล — สร้างอัตโนมัติ; Dashboard เทียบค่านี้เพื่อเตือนเมื่อ Code.gs ล้าสมัย */
 const SCHEMA_VERSION = 'gha0yc';
-
-/** รหัสผ่านแต่ละระดับ — แก้ก่อนใช้งานจริง (หรือเก็บใน Project Settings → Script properties: TOKEN_ADMIN / TOKEN_EDITOR / TOKEN_VIEWER) */
-const TOKENS = {
-  admin:  'admin',                  // Full: CRUD + Push ทั้งแท็บ + สร้างฐานข้อมูล + จัดการการแชร์ (⚠ รหัสสั้น เดาง่าย — แนะนำตั้ง TOKEN_ADMIN ใน Script properties แทน)
-  editor: 'admin',                  // เพิ่ม/แก้ไข/ลบ รายแถว (ตอนนี้ใช้รหัสเดียวกับ ADMIN จึงถูกตีความเป็น ADMIN เสมอ — ตั้งรหัสต่างกันหากต้องการแยกสิทธิ์)
-  viewer: 'VIEWER-เปลี่ยนรหัสนี้'   // อ่านอย่างเดียว (ข้อมูลส่วนบุคคลถูกปิดบัง)
-};
 
 const TZ = 'Asia/Bangkok';
 const MAX_TEXT = 2000;
@@ -325,11 +318,37 @@ const DB = {
 
 function ss_() { return SpreadsheetApp.getActiveSpreadsheet(); }
 function nowIso_() { return Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd'T'HH:mm:ss"); }
-function isDefaultToken_(v) { return !v || String(v).indexOf('เปลี่ยนรหัสนี้') >= 0; }
+const ROLES = ['admin', 'editor', 'viewer'];
+const MIN_TOKEN = 4;
 
-function tokenOf_(role) {
-  const p = PropertiesService.getScriptProperties().getProperty('TOKEN_' + role.toUpperCase());
-  return p || TOKENS[role];
+/** รหัสผ่านเก็บใน Script Properties (TOKEN_ADMIN / TOKEN_EDITOR / TOKEN_VIEWER) เท่านั้น — ไม่มีรหัสใดอยู่ในซอร์สโค้ดนี้ */
+function tokenOf_(role) { return PropertiesService.getScriptProperties().getProperty('TOKEN_' + role.toUpperCase()) || ''; }
+function hasToken_(role) { return tokenOf_(role).length >= MIN_TOKEN; }
+
+/** ตั้งรหัสจาก Apps Script editor: setToken('admin', 'รหัสของคุณ') */
+function setToken(role, value) {
+  role = String(role || '').toLowerCase();
+  if (ROLES.indexOf(role) < 0) throw new Error("role ต้องเป็น 'admin' | 'editor' | 'viewer'");
+  value = String(value || '');
+  if (value.length < MIN_TOKEN) throw new Error('รหัสต้องยาวอย่างน้อย ' + MIN_TOKEN + ' ตัวอักษร');
+  PropertiesService.getScriptProperties().setProperty('TOKEN_' + role.toUpperCase(), value);
+}
+/** ปิดสิทธิ์ของ role นั้น (ลบรหัส) */
+function clearToken(role) { PropertiesService.getScriptProperties().deleteProperty('TOKEN_' + String(role).toUpperCase()); }
+
+/** เมนู: ตั้งรหัสผ่านทีละระดับ (เว้นว่าง = ไม่เปลี่ยน · พิมพ์ - = ปิดสิทธิ์) */
+function setTokens() {
+  const ui = SpreadsheetApp.getUi(), done = [];
+  for (let i = 0; i < ROLES.length; i++) {
+    const r = ROLES[i];
+    const a = ui.prompt('ตั้งรหัสผ่าน ' + r.toUpperCase() + ' (' + (hasToken_(r) ? 'ตั้งแล้ว' : 'ยังไม่ตั้ง') + ')', 'อย่างน้อย ' + MIN_TOKEN + ' ตัวอักษร · เว้นว่าง = ไม่เปลี่ยน · พิมพ์ - = ปิดสิทธิ์นี้', ui.ButtonSet.OK_CANCEL);
+    if (a.getSelectedButton() !== ui.Button.OK) break;
+    const v = a.getResponseText();
+    if (!v) continue;
+    if (v === '-') { clearToken(r); done.push(r.toUpperCase() + ' ปิดแล้ว'); continue; }
+    try { setToken(r, v); done.push(r.toUpperCase() + ' ตั้งแล้ว'); } catch (e) { ui.alert(e.message); }
+  }
+  ui.alert(done.length ? done.join('\n') : 'ไม่มีการเปลี่ยนแปลง');
 }
 
 /** เลขรุ่นข้อมูล: เปลี่ยนทุกครั้งที่มีการเขียน เพื่อให้ Dashboard รู้ว่าต้อง Pull */
@@ -359,8 +378,7 @@ function roleOf_(token) {
   const t = String(token);
   const roles = ['admin', 'editor', 'viewer'];
   for (let i = 0; i < roles.length; i++) {
-    const tk = tokenOf_(roles[i]);
-    if (!isDefaultToken_(tk) && tk === t) return roles[i];
+    if (hasToken_(roles[i]) && tokenOf_(roles[i]) === t) return roles[i];
   }
   return 'none';
 }
@@ -508,7 +526,7 @@ function doGet(e) {
     if (role !== 'none') ensureSchema_();
     if (action === 'ping') {
       const m = meta_();
-      return json_({ ok: true, version: VERSION, schemaVersion: SCHEMA_VERSION, rev: getRev_(), name: m.name, url: m.url, id: m.id, tabs: m.tabs, role: role });
+      return json_({ ok: true, version: VERSION, schemaVersion: SCHEMA_VERSION, rev: getRev_(), name: m.name, url: m.url, id: m.id, tabs: m.tabs, role: role, tokensSet: ROLES.filter(hasToken_).length });
     }
     if (action === 'whoami') return json_({ ok: true, role: role });
     if (role === 'none') return fail_('Token ไม่ถูกต้องหรือยังไม่ได้ตั้งรหัสใน Code.gs', 401);
@@ -693,10 +711,10 @@ function setupDatabase_() {
   if (def1 && def1.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(def1);
   try { ss.setActiveSheet(ss.getSheetByName('Config')); } catch (e) { /* ไม่มี UI */ }
   const trg = installAutoTriggers_();
-  const rolesReady = ['admin', 'editor', 'viewer'].filter(function (r) { return !isDefaultToken_(tokenOf_(r)); });
+  const rolesReady = ROLES.filter(hasToken_);
   return 'ฐานข้อมูลพร้อมใช้งาน — สร้างใหม่ ' + created.length + ' แท็บ' + (created.length ? ' (' + created.join(', ') + ')' : '') +
     (repaired.length ? ' · ซ่อมแซม: ' + repaired.join(', ') : '') +
-    ' · Auto-sync trigger: ' + trg + ' · Token ที่ตั้งแล้ว: ' + (rolesReady.length ? rolesReady.join(', ').toUpperCase() : 'ยังไม่มี (แก้ TOKENS ใน Code.gs)');
+    ' · Auto-sync trigger: ' + trg + ' · Token ที่ตั้งแล้ว: ' + (rolesReady.length ? rolesReady.join(', ').toUpperCase() : 'ยังไม่มี (เมนู BCP นราธิวาส → ตั้งรหัสผ่าน)');
 }
 
 /* ───────────────────────── สิทธิ์การแชร์ไฟล์ ───────────────────────── */
@@ -749,6 +767,7 @@ function autoMaintenance_() {
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('BCP นราธิวาส')
     .addItem('🏗 สร้าง/ซ่อมแซมฐานข้อมูล', 'setupDatabase')
+    .addItem('🔑 ตั้งรหัสผ่าน (Token)', 'setTokens')
     .addItem('🔄 ติดตั้ง Auto-sync Trigger', 'installAutoTriggers')
     .addItem('ℹ ตรวจสอบสถานะระบบ', 'showStatus')
     .addSeparator()
@@ -760,7 +779,7 @@ function onOpen() {
 
 function showStatus() {
   const m = meta_();
-  const roles = ['admin', 'editor', 'viewer'].map(function (r) { return r.toUpperCase() + ': ' + (isDefaultToken_(tokenOf_(r)) ? '❌ ยังไม่ได้ตั้งรหัส' : '✅ ตั้งแล้ว'); });
+  const roles = ROLES.map(function (r) { return r.toUpperCase() + ': ' + (hasToken_(r) ? '✅ ตั้งแล้ว' : '❌ ยังไม่ได้ตั้งรหัส'); });
   const tabs = DB.order.map(function (t) { return (m.tabs[t] === null ? '❌ ' : '✅ ') + t + (m.tabs[t] === null ? '' : ' (' + m.tabs[t] + ')'); });
   alert_('เวอร์ชัน ' + VERSION + ' · สคีมา ' + SCHEMA_VERSION + ' · rev ' + getRev_() + '\n\nสิทธิ์\n' + roles.join('\n') + '\n\nแท็บ\n' + tabs.join('\n'));
 }

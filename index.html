@@ -179,7 +179,7 @@ pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.
     <tr><td><b>ADMIN</b> (Full)</td><td>✓</td><td>✓</td><td>✓</td><td>เห็นครบ</td></tr>
     <tr><td><b>EDITOR</b></td><td>✓</td><td>✓</td><td>—</td><td>เห็นครบ</td></tr>
     <tr><td><b>VIEWER</b></td><td>✓</td><td>—</td><td>—</td><td>ปิดบัง (ชื่อ/เบอร์/ที่อยู่)</td></tr></table>
-    <div class="hint">กำหนดรหัสทั้ง 3 ระดับในไฟล์ Code.gs (ค่า TOKENS) · ตัวแอปตรวจสิทธิ์จริงที่เซิร์ฟเวอร์ ไม่ใช่แค่ซ่อนปุ่ม</div></fieldset>
+    <div class="hint">กำหนดรหัสทั้ง 3 ระดับที่เมนู "BCP นราธิวาส → ตั้งรหัสผ่าน" ใน Google Sheet (เก็บใน Script Properties ไม่อยู่ในโค้ด) · ตัวแอปตรวจสิทธิ์จริงที่เซิร์ฟเวอร์ ไม่ใช่แค่ซ่อนปุ่ม</div></fieldset>
    <fieldset><legend>ปลดล็อกการแชร์ไฟล์ Google Sheet (ต้องใช้ ADMIN)</legend>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
      <button data-w="admin" id="aPriv">🔒 ส่วนตัว (เฉพาะเจ้าของ)</button><button data-w="admin" id="aView">👁 ผู้มีลิงก์ดูได้ (Viewer)</button><button data-w="admin" class="dng" id="aEdit">🔓 ผู้มีลิงก์แก้ไขได้ (Full)</button></div>
@@ -195,7 +195,7 @@ pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.
    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center"><button class="pri" id="cCopy">📋 คัดลอกโค้ด</button><button id="cDl">⬇ ดาวน์โหลด Code.gs</button><span class="hint" id="cInfo"></span></div>
    <pre id="cTxt">กำลังโหลด…</pre>
    <div class="step"><b>1</b><span>เปิด Google Sheet → Extensions → Apps Script → วางโค้ดทั้งหมดแทนของเดิม</span></div>
-   <div class="step"><b>2</b><span>ตรวจ <b>TOKENS</b> ด้านบน (ADMIN = EDITOR = <code>admin</code>; VIEWER ต้องตั้งรหัสเองก่อนจึงจะใช้ได้) แล้วเลือกฟังก์ชัน <b>setupDatabase</b> → Run → อนุญาตสิทธิ์</span></div>
+   <div class="step"><b>2</b><span>เปิด Google Sheet → เมนู <b>BCP นราธิวาส → ตั้งรหัสผ่าน (Token)</b> ตั้งรหัส ADMIN / EDITOR / VIEWER (อย่างน้อย 4 ตัวอักษร) แล้วเลือกฟังก์ชัน <b>setupDatabase</b> → Run → อนุญาตสิทธิ์</span></div>
    <div class="step"><b>3</b><span>Deploy เป็น Web app (ดูแท็บ "ปลดล็อกสิทธิ์") แล้วนำ URL + Token กลับมาใส่</span></div>
   </div>
  </div>
@@ -992,7 +992,7 @@ $('#iPull').onclick=async()=>{readInt();lastSig='';await pull(true);intStatus()}
 $('#iTest').onclick=async()=>{
   readInt();
   try{
-    if(S.script){const j=await http('GET','ping');ST.meta=j;setVer(j.schemaVersion);toast('✓ Web App ตอบกลับ · '+(j.name||'')+' · เวอร์ชัน '+(j.version||''));if(!S.token)toast('ใส่ Token เพื่อให้ระบบทราบสิทธิ์ของคุณ',1)}
+    if(S.script){const j=await http('GET','ping');ST.meta=j;setVer(j.schemaVersion);toast('✓ Web App ตอบกลับ · '+(j.name||'')+' · เวอร์ชัน '+(j.version||''));if(j.tokensSet===0)toast('Web App ยังไม่ได้ตั้งรหัสผ่าน — เปิดเมนู BCP นราธิวาส → ตั้งรหัสผ่าน (Token) ใน Google Sheet',1);else if(!S.token)toast('ใส่ Token เพื่อให้ระบบทราบสิทธิ์ของคุณ',1)}
     else if(!sheetId())return toast('กรุณาใส่ Sheet ID หรือ Web App URL',1);
     lastSig='';await pull(true);intStatus();
   }catch(e){ST.err=e.message;ST.conn='err';intStatus();toast(e.message,1)}
