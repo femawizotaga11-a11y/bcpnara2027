@@ -127,10 +127,66 @@ pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.
 @keyframes in{from{transform:translateX(40px);opacity:0}}
 .foot{position:fixed;bottom:0;left:0;right:0;z-index:50;display:flex;gap:20px;justify-content:center;flex-wrap:wrap;padding:6px 14px;font-size:.72rem;color:var(--mu);backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 86%,transparent);border-top:1px solid var(--cb)}
 .step{display:flex;gap:10px;align-items:flex-start;margin:7px 0;font-size:.82rem}.step b{flex:none;width:22px;height:22px;border-radius:50%;background:var(--ac);color:var(--pri-tx);display:grid;place-items:center;font-size:.72rem}
+/* ===== Motion graphics (เปิด/ปิดได้ที่ ⚙ ตั้งค่า · เคารพ prefers-reduced-motion) ===== */
+@keyframes rise{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes slideL{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+@keyframes wv{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes wvr{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+@keyframes ping{0%{transform:scale(.3);opacity:.9}80%,100%{transform:scale(1.9);opacity:0}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--lv,var(--ac)) 55%,transparent)}50%{box-shadow:0 0 22px 4px color-mix(in srgb,var(--lv,var(--ac)) 45%,transparent)}}
+@keyframes apulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.0)}50%{box-shadow:0 0 0 5px rgba(239,68,68,.22)}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes shim{from{left:-30%}to{left:100%}}
+@keyframes spBar{from{width:0}to{width:100%}}
+@keyframes spOut{to{opacity:0;visibility:hidden}}
+@keyframes spPop{from{opacity:0;transform:scale(.6) rotate(-12deg)}to{opacity:1;transform:none}}
+@keyframes spUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.banner{position:relative;overflow:hidden}
+.banner>*:not(.rain):not(.waves){position:relative;z-index:2}
+.banner .rain{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;display:none}
+.banner .waves{position:absolute;left:0;bottom:0;width:200%;height:54px;pointer-events:none;z-index:1;display:none}
+.banner .waves path{fill:var(--lv,var(--ac))}
+.banner .waves.a{opacity:.22;height:60px}.banner .waves.b{opacity:.14;height:44px}
+.ripple{position:absolute;left:-34px;top:-34px;width:68px;height:68px;border-radius:50%;border:3px solid var(--rc,#ef4444);pointer-events:none;display:none}
+.ripple.r-red{--rc:#ef4444}.ripple.r-org{--rc:#f97316}
+header{overflow:visible}
+header:after{content:"";position:absolute;left:0;bottom:-3px;height:3px;width:30%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);pointer-events:none;display:none}
+#splash{position:fixed;inset:0;z-index:600;display:none;place-items:center;background:radial-gradient(900px 600px at 50% 40%,#6366f1,#312e81 60%,#1e1b4b);color:#fff;text-align:center;overflow:hidden}
+#splash .sp-in{position:relative;z-index:2;padding:20px}
+#splash .sp-logo{width:92px;height:92px;margin:0 auto 18px;border-radius:26px;display:grid;place-items:center;font-size:48px;background:linear-gradient(135deg,#4f46e5,#06b6d4);box-shadow:0 0 60px rgba(6,182,212,.6)}
+#splash h1{font-size:1.7rem;font-weight:700;letter-spacing:.3px}
+#splash p{font-size:.86rem;opacity:.85;margin-top:6px;max-width:520px}
+#splash .sp-bar{width:min(320px,70vw);height:6px;border-radius:9px;background:rgba(255,255,255,.2);margin:22px auto 0;overflow:hidden}
+#splash .sp-bar b{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#67e8f9,#fff)}
+#splash .sp-w{position:absolute;left:0;bottom:0;width:200%;height:110px;opacity:.25;z-index:1}
+#splash .sp-w path{fill:#67e8f9}
+.mo #splash{display:grid;animation:spOut .6s ease 2.1s forwards}
+.mo #splash .sp-logo{animation:spPop .8s cubic-bezier(.2,1.2,.3,1) both}
+.mo #splash h1{animation:spUp .7s ease .35s both}.mo #splash p{animation:spUp .7s ease .55s both}
+.mo #splash .sp-bar b{animation:spBar 1.9s cubic-bezier(.4,0,.2,1) forwards}
+.mo #splash .sp-w{animation:wv 7s linear infinite}
+.mo .banner .rain,.mo .banner .waves,.mo .ripple,.mo header:after{display:block}
+.mo .banner .waves.a{animation:wv 14s linear infinite}.mo .banner .waves.b{animation:wvr 9s linear infinite}
+.mo .ripple{animation:ping 2.2s ease-out infinite}.mo .ripple.r-org{animation-duration:3.2s}
+.mo header:after{animation:shim 3.6s linear infinite}
+.mo .logo{animation:floaty 4s ease-in-out infinite}
+.mo .badge{animation:glow 2.4s ease-in-out infinite}
+.mo main:not(.still) .kpi,.mo main:not(.still) .card,.mo main:not(.still) .chip,.mo main:not(.still) .bi,.mo main:not(.still) .ph,.mo main:not(.still) .notice{animation:rise .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*55ms)}
+.mo main:not(.still) .al{animation:slideL .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*70ms)}
+.mo .al.a-red{animation:apulse 2.4s ease-in-out infinite!important}
+.mo .kpi,.mo .card,.mo .chip{transition:transform .25s ease,box-shadow .25s ease}
+.mo .kpi:hover,.mo .chip:hover{transform:translateY(-4px)}
+.mo .card:hover{transform:translateY(-2px)}
+.mo .bar>b{transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.mo nav a{transition:background .2s,transform .2s,border-color .2s}.mo nav a:hover{transform:translateX(3px)}
+.mo .dot.live{animation:pulse 1.8s infinite}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}#splash{display:none!important}}
+
 @media print{header,nav,.foot,button{display:none}.layout{display:block}}
 </style>
 </head>
 <body>
+<div id="splash"><svg class="sp-w" viewBox="0 0 2400 80" preserveAspectRatio="none"></svg><div class="sp-in"><div class="sp-logo">🛡️</div><h1>EOC · BCP นราธิวาส 2570</h1><p>ศูนย์ปฏิบัติการฉุกเฉิน · แผนความต่อเนื่องทางธุรกิจด้านการแพทย์และสาธารณสุข สสจ.นราธิวาส</p><div class="sp-bar"><b></b></div></div></div>
 <header>
   <button id="bMenu" class="sm" style="display:none">☰</button>
   <div class="logo">🛡️</div>
@@ -205,7 +261,7 @@ pre{background:#020617;color:#a5f3fc;border-radius:12px;padding:12px;font-size:.
 <div class="ov" id="ovSet"><div class="md"><div class="mh">⚙ ตั้งค่าการแสดงผลและเกณฑ์แจ้งเตือน<span class="sp"></span><button class="sm" data-x="ovSet">✕</button></div><div class="mb">
  <fieldset><legend>🔄 การอัปเดต</legend><label>ความถี่ดึงข้อมูลอัตโนมัติ (Real-time)</label><select id="sInt"><option value="0">ปิด</option><option value="5">ทุก 5 วินาที</option><option value="10">ทุก 10 วินาที</option><option value="15">ทุก 15 วินาที</option><option value="30">ทุก 30 วินาที</option><option value="60">ทุก 1 นาที</option><option value="300">ทุก 5 นาที</option></select></fieldset>
  <fieldset><legend>🚨 เกณฑ์แจ้งเตือน</legend><div class="r2"><div><label>ฝน 24 ชม. เกิน (มม.)</label><input id="sR24" type="number"></div><div><label>ฝน 72 ชม. เกิน (มม.)</label><input id="sR72" type="number"></div><div><label>Autonomy ต่ำกว่า (ชม.)</label><input id="sAut" type="number"></div><div><label>ความคืบหน้า BCP ต่ำกว่า (%)</label><input id="sBcp" type="number"></div></div>
-  <div class="sw"><input type="checkbox" id="sSnd"><span>เสียงเตือนเมื่อมีแจ้งเตือนวิกฤตใหม่</span></div></fieldset>
+  <div class="sw"><input type="checkbox" id="sSnd"><span>เสียงเตือนเมื่อมีแจ้งเตือนวิกฤตใหม่</span></div><div class="sw"><input type="checkbox" id="sMo"><span>เปิดภาพเคลื่อนไหว (Motion graphics: ฝน/คลื่นน้ำ/count-up/ripple) — ปิดอัตโนมัติถ้าระบบตั้งลดการเคลื่อนไหว</span></div></fieldset>
  <fieldset><legend>🎨 การแสดงผล</legend><label>หัวเรื่อง</label><input id="sTitle"><div class="r2"><div><label>ธีม</label><select id="sTheme"><option value="light">สว่างสดใส (นักศึกษา/นักวิชาการ)</option><option value="dark">มืด (ห้อง EOC)</option></select></div><div><label>สีหลัก</label><input id="sAcc" type="color" style="height:38px;padding:2px"></div></div><label>ศูนย์กลางแผนที่ (lat,lng)</label><input id="sMap"></fieldset>
  <fieldset><legend>💾 การตั้งค่า</legend><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="sExp">ส่งออก JSON</button><button id="sImpB">นำเข้า JSON</button><button class="dng" id="sRst">รีเซ็ต</button><input type="file" id="sImp" accept=".json" hidden></div></fieldset>
  </div><div class="mf"><button data-x="ovSet">ยกเลิก</button><button class="pri" id="sSave">บันทึก</button></div></div></div>
@@ -255,7 +311,7 @@ const schemaVer=()=>{const t=JSON.stringify(Object.keys(SCHEMA).map(k=>[k,SCHEMA
 /* SCHEMA_DEF_END */
 
 /* ============ ตั้งค่า / สถานะ ============ */
-const DEF={sheet:'',script:'',token:'',interval:15,r24:150,r72:300,aut:36,bcp:60,sound:false,title:'ศูนย์ปฏิบัติการฉุกเฉิน (EOC) · BCP ด้านการแพทย์และสาธารณสุข สสจ.นราธิวาส ปี 2570',theme:'light',acc:'',map:'6.25,101.85',v:3};
+const DEF={sheet:'',script:'',token:'',interval:15,r24:150,r72:300,aut:36,bcp:60,sound:false,motion:true,title:'ศูนย์ปฏิบัติการฉุกเฉิน (EOC) · BCP ด้านการแพทย์และสาธารณสุข สสจ.นราธิวาส ปี 2570',theme:'light',acc:'',map:'6.25,101.85',v:3};
 const LS='bcpnara.eoc.v2';
 let S=(()=>{try{const o=JSON.parse(localStorage.getItem(LS)||'{}');if((o.v||0)<3){o.theme='light';o.acc='';o.v=3}return {...DEF,...o}}catch(e){return {...DEF}}})();
 const save=()=>{try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}};
@@ -444,15 +500,16 @@ function renderView(changed){
   $('#nGo')?.addEventListener('click',()=>openOv('ovInt'));$('#nVer')?.addEventListener('click',()=>{openOv('ovInt');showTab('Code')});
   if(route==='overview')drawMap();else{p.tabs.forEach(k=>bindModule(k,p));if(p.map)drawMap();afterPage(p)}
   setConn();renderFoot();
+  const entrance=route!==RV_LAST;RV_LAST=route;motion(entrance);
 }
 function renderFoot(){const A=alerts();alertSound(A);$('#foot').innerHTML=`<span>แหล่งข้อมูล: Google Sheet${ST.meta?.name?' · '+esc(ST.meta.name):''}</span><span>แจ้งเตือน ${A.length} รายการ</span><span>ซิงก์ล่าสุด ${ST.pulled?ST.pulled.toLocaleTimeString('th-TH'):'—'}</span><span>สิทธิ์: ${ST.conn==='api'?ST.role.toUpperCase():ST.conn==='gviz'?'อ่านอย่างเดียว':'—'}</span>`}
 
 function viewOverview(changed){
   const X=derive(),lv=X.C.level;const col=lv==='3'?'var(--red)':lv==='2'?'var(--org)':lv==='1'?'var(--yel)':lv==='0'?'var(--grn)':'var(--mu)';
-  const k=(l,v,u,n,c,fl)=>`<div class="kpi ${fl?'flash':''}" style="--c:${c}"><div class="l">${l}</div><div class="v mono">${v}<small>${u}</small></div><div class="n">${n}</div></div>`;
+  const k=(l,v,u,n,c,fl)=>`<div class="kpi ${fl?'flash':''}" style="--c:${c}"><div class="l">${l}</div><div class="v mono"><span class="cu">${v}</span><small>${u}</small></div><div class="n">${n}</div></div>`;
   const dash='—',f1=v=>v==null?dash:(Math.round(v*10)/10).toLocaleString('th-TH');
   const A=alerts(),B=D('BCP'),avg=B.length?Math.round(B.reduce((s,b)=>s+num(b.progress),0)/B.length):null;
-  return `<div class="banner" style="--lv:${col}"><div class="lvl mono"><small>ระดับสถานการณ์จังหวัด</small>${lv!=null&&lv!==''?'LEVEL '+esc(lv):dash}</div><span class="badge">${esc(X.C.level_name||'ยังไม่กำหนด')}</span>
+  return `<div class="banner" style="--lv:${col}"><canvas class="rain"></canvas>${wavesSvg()}<div class="lvl mono"><small>ระดับสถานการณ์จังหวัด</small>${lv!=null&&lv!==''?'LEVEL '+esc(lv):dash}</div><span class="badge">${esc(X.C.level_name||'ยังไม่กำหนด')}</span>
    <div style="flex:1;min-width:220px"><div style="font-weight:500">${esc(X.C.level_note||'กำหนดค่าได้ที่เมนู 1 › ค่าสถานการณ์จังหวัด (คีย์ level, level_name, level_note)')}</div><div class="hint">ข้อมูลฝนล่าสุด ${esc(X.rfDate||'—')} · ประเมิน ${esc(X.C.as_of||'—')}</div></div><span class="pill">นราธิวาส · ฤดูน้ำท่วม 2570</span></div>
   <div class="kpis">
    ${k('ฝนสะสม 24 ชม. (สูงสุดรายอำเภอ)',f1(X.r24),'มม.','เฉลี่ย '+f1(X.r24a)+' · '+X.rfN+' จุดวัด',X.r24>S.r24?'var(--red)':'var(--blu)',changed)}
@@ -464,7 +521,7 @@ function viewOverview(changed){
    ${k('กลุ่มเปราะบางในทะเบียน',fmt(X.vul),'ราย','ลำดับ 1: '+D('Vulnerable').filter(v=>v.evac_priority==='1').length+' ราย','var(--ac)')}
    ${k('เสียชีวิตจากน้ำท่วม',X.C.deaths!==undefined&&X.C.deaths!==''?esc(X.C.deaths):dash,'ราย','Zero Preventable Death','var(--pink)')}</div>
   <div class="grid"><div class="card c8"><h3>🗺 แผนที่สถานการณ์รายอำเภอ<span class="tools" id="mapTools"></span></h3><div id="map"></div></div>
-   <div class="card c4"><h3>🚨 แจ้งเตือนอัตโนมัติ<span class="tools">${A.length} รายการ</span></h3><div class="alerts">${A.map(([c,t,d])=>`<div class="al" style="--c:var(--${c})"><b>${esc(t)}</b><br><span style="color:var(--mu)">${esc(d)}</span></div>`).join('')||'<div class="empty">ไม่มีแจ้งเตือน (คำนวณจากข้อมูลใน Sheet)</div>'}</div></div></div>
+   <div class="card c4"><h3>🚨 แจ้งเตือนอัตโนมัติ<span class="tools">${A.length} รายการ</span></h3><div class="alerts">${A.map(([c,t,d])=>`<div class="al a-${c}" style="--c:var(--${c})"><b>${esc(t)}</b><br><span style="color:var(--mu)">${esc(d)}</span></div>`).join('')||'<div class="empty">ไม่มีแจ้งเตือน (คำนวณจากข้อมูลใน Sheet)</div>'}</div></div></div>
   <div class="card"><h3>📋 ความก้าวหน้าตามแผน BCP<span class="tools">ภาพรวม ${avg==null?dash:avg+'%'}</span></h3>${B.map(b=>`<div class="bi"><div class="h"><span class="no mono">${esc(b.no)}</span><span style="flex:1">${esc(b.title)}</span><span class="tag ${tagCls(b.status)}">${esc(b.status||'-')}</span><b class="mono">${num(b.progress)}%</b></div><div class="bar" style="margin:8px 0 0 34px"><b style="width:${Math.min(100,num(b.progress))}%"></b></div></div>`).join('')||'<div class="empty">ยังไม่มีข้อมูลแท็บ BCP — รัน setupDatabase ใน Code.gs</div>'}</div>`;
 }
 function viewPage(p){
@@ -578,6 +635,48 @@ const METRICS={risk:['ระดับความเสี่ยง',d=>({'แ�
  gexp:['น้ำท่วมซ้ำซาก GISTDA (% พื้นที่อำเภอ)',d=>EXPO[d.district]?.pct||0,0],
  vul:['กลุ่มเปราะบางในทะเบียน (ราย)',d=>D('Vulnerable').filter(v=>v.district===d.district).length,0],
  rain:['ฝนสะสม 24 ชม. (มม.)',d=>{const X=derive(),r=D('Rainfall').find(r=>r.district===d.district&&r.as_of===X.rfDate);return r?num(r.rain24):0},0]};
+/* ======== Motion graphics: ฝนตามข้อมูลจริง · คลื่นน้ำ · count-up · เข้าฉากแบบสเตเกอร์ · ripple บนอำเภอเสี่ยง · splash ======== */
+const motionOn=()=>document.body.classList.contains('mo');
+function wavePath(amp,len){let d='M0 40';for(let x=0;x<2400;x+=len)d+=' Q'+(x+len/4)+' '+(40-amp)+' '+(x+len/2)+' 40 T'+(x+len)+' 40';return d+' V80 H0Z'}
+const wavesSvg=()=>'<svg class="waves a" viewBox="0 0 2400 80" preserveAspectRatio="none"><path d="'+wavePath(18,300)+'"/></svg><svg class="waves b" viewBox="0 0 2400 80" preserveAspectRatio="none"><path d="'+wavePath(12,200)+'"/></svg>';
+let RAIN=0,RV_LAST='';
+function startRain(){
+  cancelAnimationFrame(RAIN);const cv=document.querySelector('canvas.rain');if(!cv||!motionOn())return;
+  const p=cv.parentElement,ctx=cv.getContext('2d');cv.width=p.clientWidth;cv.height=p.clientHeight;
+  const X=derive(),k=X.r24!=null?Math.min(1.4,X.r24/(S.r24||150)):.18,n=Math.round(28+210*Math.min(1,k));  // ความหนาแน่นฝน = ฝน 24 ชม. เทียบเกณฑ์
+  const light=document.documentElement.dataset.theme==='light',col=light?'rgba(79,70,229,.42)':'rgba(147,197,253,.55)';
+  const drops=Array.from({length:n},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,l:8+Math.random()*14,v:3+Math.random()*5*(.6+k)}));
+  (function f(){
+    if(!cv.isConnected)return;
+    ctx.clearRect(0,0,cv.width,cv.height);ctx.strokeStyle=col;ctx.lineWidth=1.2;ctx.beginPath();
+    for(const d of drops){ctx.moveTo(d.x,d.y);ctx.lineTo(d.x-d.l*.25,d.y+d.l);d.y+=d.v;d.x-=d.v*.25;if(d.y>cv.height){d.y=-d.l;d.x=Math.random()*(cv.width+40)}if(d.x<0)d.x=cv.width}
+    ctx.stroke();RAIN=requestAnimationFrame(f);
+  })();
+}
+function countUp(el){
+  const raw=el.textContent.trim();if(!/^-?[\d,]+(\.\d+)?$/.test(raw))return;
+  const to=parseFloat(raw.replace(/,/g,'')),dec=(raw.split('.')[1]||'').length,t0=performance.now(),T=900;
+  const fm=v=>v.toLocaleString('th-TH',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+  (function f(t){const p=Math.min(1,(t-t0)/T),e=1-Math.pow(1-p,3);el.textContent=p<1?fm(to*e):raw;if(p<1)requestAnimationFrame(f)})(t0);
+}
+function motion(entrance){
+  const m=$('#main');m.classList.toggle('still',!entrance);
+  if(!motionOn())return;
+  if(entrance){
+    $$('#main .ph,#main .notice,#main .kpi,#main .card,#main .chip,#main .al,#main .bi').forEach((e,i)=>e.style.setProperty('--i',Math.min(i,26)));
+    $$('#main .cu,#main .chip b').forEach(countUp);
+    $$('#main .bar>b').forEach(b=>{const w=b.style.width;b.style.width='0';requestAnimationFrame(()=>requestAnimationFrame(()=>{b.style.width=w}))});
+  }
+  startRain();
+}
+function initSplash(){
+  const sp=$('#splash');if(!sp)return;
+  let seen=false;try{seen=sessionStorage.getItem('splash')==='1';sessionStorage.setItem('splash','1')}catch(e){}
+  if(!motionOn()||seen){sp.remove();return}
+  sp.querySelector('.sp-w').innerHTML='<path d="'+wavePath(26,300)+'"/>';
+  setTimeout(()=>sp.remove(),2800);
+}
+
 /* ======== เส้นทางคมนาคม: ประวัติถูกตัดขาดย้อนหลัง 3 ปี + เส้นทางสำรอง Bypass (BCP ข้อ 2) ======== */
 const RC_F={period:'3y',cause:''};
 const YEARCOL=['#ef4444','#f97316','#a855f7','#0ea5e9','#10b981','#64748b'];
@@ -941,7 +1040,8 @@ function paintMap(){
       ly.bindPopup(lv&&lv.est&&!(by[f.properties.name]&&by[f.properties.name].level)?`<b>อ.${esc(f.properties.name)}</b><br>ระดับประเมินอัตโนมัติ: <b>${esc(lv.level)}</b> <small>(ยังไม่มีในชีต)</small><br><small>${esc((lv.reasons||[]).join(' · '))}</small>`:d?`<b>อ.${esc(d.district)}</b> <small>(${esc(f.properties.name_en)})</small><br>ระดับ: ${esc(d.level)} ${esc(d.trend||'')}<br>6/12/24 ชม.: ${esc(d.h6||'-')} · ${esc(d.h12||'-')} · ${esc(d.h24||'-')}<br>กลุ่มเปราะบางในทะเบียน: ${D('Vulnerable').filter(x=>x.district===d.district).length} ราย${EXPO[d.district]?'<br>น้ำท่วมซ้ำซาก (GISTDA): '+EXPO[d.district].pct.toFixed(1)+'% ≈ '+EXPO[d.district].km2.toFixed(0)+' ตร.กม.':''}`:`<b>อ.${esc(f.properties.name)}</b><br>ไม่มีข้อมูลในแท็บ Districts`);
       ly.on({mouseover:e=>e.target.setStyle({weight:3.5,color:'#1e1b4b'}),mouseout:e=>e.target.setStyle({weight:sty.weight,color:'#fff'})})}}).addTo(mapL.dist);
     const vt=(d||lv)?(mapMetric==='vul'?v+' ราย':mapMetric==='gexp'?v.toFixed(1)+'%':mapMetric==='fc24'?v.toFixed(0)+' มม.':mapMetric==='sug'?(assess(d.district)?.level||'-'):mapMetric==='rain'?v+' มม.':mapMetric==='risk'?(lv?lv.level+' '+(by[f.properties.name]&&by[f.properties.name].trend||'')+(lv.est?' (ประเมิน)':''):d.level+' '+(d.trend||'')):['ปกติ','เฝ้าระวัง','ท่วมขัง','น้ำเพิ่ม','เสี่ยงสูง'][v]):'ไม่มีข้อมูล';
-    L.marker(l.getBounds().getCenter(),{interactive:false,icon:L.divIcon({className:'',iconSize:[0,0],html:`<div class="dlab"><b>${esc(f.properties.name)}</b><span>${esc(vt)}</span></div>`})}).addTo(mapL.lab)});
+    L.marker(l.getBounds().getCenter(),{interactive:false,icon:L.divIcon({className:'',iconSize:[0,0],html:`<div class="dlab"><b>${esc(f.properties.name)}</b><span>${esc(vt)}</span></div>`})}).addTo(mapL.lab);
+    const rl=levelMode?(lv&&lv.level):(d&&d.level);if(rl==='แดง'||rl==='ส้ม')L.marker(l.getBounds().getCenter(),{interactive:false,icon:L.divIcon({className:'',iconSize:[0,0],html:'<div class="ripple r-'+(rl==='แดง'?'red':'org')+'"></div>'})}).addTo(mapL.lab)});
   const hosp=D('Hospitals'),norm=s=>String(s).replace(/โรงพยาบาล|รพ\.|\(.*?\)|\s|[​-]/g,'');
   const mk=(la,ln,t,bc,html)=>L.marker([la,ln],{icon:L.divIcon({className:'',iconSize:[22,22],html:`<div style="width:22px;height:22px;border-radius:6px;background:#fff;color:#0b5ed7;border:2px solid ${bc};display:grid;place-items:center;font:700 12px Prompt;box-shadow:0 2px 6px rgba(0,0,0,.5)">${t}</div>`})}).bindPopup(html);
   (FAC?.items||[]).forEach(p=>{const h=hosp.find(h=>norm(p.name)&&(norm(p.name).includes(norm(h.name))||norm(h.name).includes(norm(p.name))));
@@ -988,9 +1088,9 @@ async function sharing(mode){
   if(mode==='EDIT'&&!confirm('⚠ เปิดสิทธิ์ "ผู้มีลิงก์แก้ไขได้" — ใครก็ตามที่มีลิงก์จะแก้/ลบข้อมูลทั้ง Sheet ได้ รวมข้อมูลส่วนบุคคลของกลุ่มเปราะบาง\n\nยืนยัน?'))return;
   try{const j=await http('POST','setSharing',{mode});toast('✓ '+j.message)}catch(e){toast(e.message,1)}
 }
-function fillSet(){$('#sInt').value=S.interval;$('#sR24').value=S.r24;$('#sR72').value=S.r72;$('#sAut').value=S.aut;$('#sBcp').value=S.bcp;$('#sSnd').checked=S.sound;$('#sTitle').value=S.title;$('#sTheme').value=S.theme;$('#sAcc').value=customAcc()?S.acc:(S.theme==='light'?'#4f46e5':'#38bdf8');$('#sMap').value=S.map}
+function fillSet(){$('#sInt').value=S.interval;$('#sR24').value=S.r24;$('#sR72').value=S.r72;$('#sAut').value=S.aut;$('#sBcp').value=S.bcp;$('#sSnd').checked=S.sound;$('#sMo').checked=S.motion!==false;$('#sTitle').value=S.title;$('#sTheme').value=S.theme;$('#sAcc').value=customAcc()?S.acc:(S.theme==='light'?'#4f46e5':'#38bdf8');$('#sMap').value=S.map}
 const customAcc=()=>S.acc&&!['#38bdf8','#4f46e5'].includes(String(S.acc).toLowerCase());
-function look(){document.documentElement.dataset.theme=S.theme;customAcc()?document.documentElement.style.setProperty('--ac',S.acc):document.documentElement.style.removeProperty('--ac');$('#orgTitle').textContent=S.title;document.title='EOC BCP · สสจ.นราธิวาส 2570'}
+function look(){document.body.classList.toggle('mo',S.motion!==false&&!matchMedia('(prefers-reduced-motion: reduce)').matches);document.documentElement.dataset.theme=S.theme;customAcc()?document.documentElement.style.setProperty('--ac',S.acc):document.documentElement.style.removeProperty('--ac');$('#orgTitle').textContent=S.title;document.title='EOC BCP · สสจ.นราธิวาส 2570'}
 let timer;const sched=()=>{clearInterval(timer);$('#hInt').value=String(S.interval);if(+S.interval>0){nextSync=Date.now()+S.interval*1000;timer=setInterval(()=>{nextSync=Date.now()+S.interval*1000;pull()},S.interval*1000)}else nextSync=0};
 
 /* ============ Events ============ */
@@ -1018,7 +1118,7 @@ $('#iSetup').onclick=async()=>{if(!isAdmin())return toast('ต้องใช้
 $('#aPriv').onclick=()=>sharing('PRIVATE');$('#aView').onclick=()=>sharing('VIEW');$('#aEdit').onclick=()=>sharing('EDIT');
 $('#cCopy').onclick=()=>{navigator.clipboard.writeText(codeTxt);toast('คัดลอก Code.gs แล้ว')};
 $('#cDl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([codeTxt],{type:'text/plain;charset=utf-8'}));a.download='Code.gs';a.click()};
-$('#sSave').onclick=()=>{S.interval=+$('#sInt').value;S.r24=num($('#sR24').value);S.r72=num($('#sR72').value);S.aut=num($('#sAut').value);S.bcp=num($('#sBcp').value);S.sound=$('#sSnd').checked;S.title=$('#sTitle').value;S.theme=$('#sTheme').value;S.acc=$('#sAcc').value;S.map=$('#sMap').value||DEF.map;save();look();sched();closeOv('ovSet');renderView()};
+$('#sSave').onclick=()=>{S.interval=+$('#sInt').value;S.r24=num($('#sR24').value);S.r72=num($('#sR72').value);S.aut=num($('#sAut').value);S.bcp=num($('#sBcp').value);S.sound=$('#sSnd').checked;S.motion=$('#sMo').checked;S.title=$('#sTitle').value;S.theme=$('#sTheme').value;S.acc=$('#sAcc').value;S.map=$('#sMap').value||DEF.map;save();look();sched();closeOv('ovSet');renderView()};
 $('#sExp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({...S,token:''},null,2)],{type:'application/json'}));a.download='eoc-settings.json';a.click()};
 $('#sImpB').onclick=()=>$('#sImp').click();$('#sImp').onchange=async e=>{try{S={...S,...JSON.parse(await e.target.files[0].text()),token:S.token};save();fillSet();toast('นำเข้าแล้ว กด "บันทึก"')}catch(x){toast('ไฟล์ไม่ถูกต้อง',1)}};
 $('#sRst').onclick=()=>{if(confirm('รีเซ็ตการตั้งค่าทั้งหมด?')){localStorage.removeItem(LS);location.reload()}};
@@ -1032,7 +1132,7 @@ setInterval(()=>{$('#clock').textContent=new Date().toLocaleTimeString('th-TH');
 $('#hInt').onchange=e=>{S.interval=+e.target.value;save();sched();if(S.interval)toast('Auto-sync ทุก '+S.interval+' วินาที')};
 $('#verWarn').onclick=()=>{openOv('ovInt');showTab('Code')};
 if(innerWidth<=900)$('#bMenu').style.display='';
-look();sched();go();pull();
+look();initSplash();sched();go();pull();
 </script>
 </body>
 </html>
