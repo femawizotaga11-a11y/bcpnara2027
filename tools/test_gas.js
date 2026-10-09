@@ -51,8 +51,13 @@ let n = 0; const ok = (name, fn) => { try { fn(); n++; console.log('  ✓', name
 
 console.log('Code.gs tests');
 ok('ปฏิเสธทุกคำสั่งเมื่อยังไม่ได้ตั้ง Token (ค่าเริ่มต้น)', () => {
-  assert.strictEqual(post({ action: 'create', token: api.TOKENS.admin, tab: 'Roads', row: {} }).code, 401);
+  assert.strictEqual(post({ action: 'create', token: api.TOKENS.editor, tab: 'Roads', row: {} }).code, 401);
   assert.strictEqual(get({ action: 'readAll', token: api.TOKENS.viewer }).ok, false);
+});
+ok("ADMIN = 'admin' ตามที่ตั้งใน Code.gs ใช้งานได้ (EDITOR/VIEWER ยังปิด)", () => {
+  assert.strictEqual(api.TOKENS.admin, 'admin');
+  assert.strictEqual(get({ action: 'whoami', token: 'admin' }).role, 'admin');
+  assert.strictEqual(get({ action: 'whoami', token: api.TOKENS.editor }).role, 'none');
 });
 props.TOKEN_ADMIN = 'A1'; props.TOKEN_EDITOR = 'E1'; props.TOKEN_VIEWER = 'V1';
 ok('ping ใช้ได้โดยไม่ต้องมี token', () => assert.strictEqual(get({ action: 'ping' }).ok, true));
